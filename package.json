@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "preinstall": "rm -rf node_modules package-lock.json",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
