@@ -153,42 +153,43 @@ export default function ChartUserByCountry() {
             <PieCenterLabel primaryText="98.5K" secondaryText="Total" />
           </PieChart>
         </Box>
-        {countries.map((country, index) => (
-          <Stack
-            key={index}
-            direction="row"
-            sx={{ alignItems: 'center', gap: 2, pb: 2 }}
-          >
-            {country.flag}
-            <Stack sx={{ gap: 1, flexGrow: 1 }}>
-              <Stack
-                direction="row"
-                sx={{
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: 2,
-                }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: '500' }}>
-                  {country.name}
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {country.value}%
-                </Typography>
-              </Stack>
-              <LinearProgress
-                variant="determinate"
-                aria-label="Number of users by country"
-                value={country.value}
-                sx={{
-                  [`& .${linearProgressClasses.bar}`]: {
-                    backgroundColor: country.color,
-                  },
-                }}
-              />
+        {countries.map((country) => (
+        <Stack
+          key={country.name} // clave única basada en el nombre
+          direction="row"
+          sx={{ alignItems: 'center', gap: 2, pb: 2 }}
+        >
+          {country.flag}
+          <Stack sx={{ gap: 1, flexGrow: 1 }}>
+            <Stack
+              direction="row"
+              sx={{
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 2,
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: '500' }}>
+                {country.name}
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {country.value}%
+              </Typography>
             </Stack>
+            <LinearProgress
+              variant="determinate"
+              aria-label="Number of users by country"
+              value={country.value}
+              sx={{
+                [`& .${linearProgressClasses.bar}`]: {
+                  backgroundColor: country.color,
+                },
+              }}
+            />
           </Stack>
-        ))}
+        </Stack>
+      ))}
+
       </CardContent>
     </Card>
   );

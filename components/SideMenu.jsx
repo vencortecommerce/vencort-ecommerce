@@ -6,10 +6,9 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import SelectContent from './SelectContent';
 import MenuContent from './MenuContent';
-import CardAlert from './CardAlert';
 import OptionsMenu from './OptionsMenu';
+import { useUser } from '../src/context/UserContext';
 
 const drawerWidth = 240;
 
@@ -24,7 +23,9 @@ const Drawer = styled(MuiDrawer)({
   },
 });
 
-export default function SideMenu() {
+export default function SideMenu({ selectedPage, setSelectedPage }) {
+  const { user } = useUser();
+
   return (
     <Drawer
       variant="permanent"
@@ -42,7 +43,6 @@ export default function SideMenu() {
           p: 1.5,
         }}
       >
-        <SelectContent />
       </Box>
       <Divider />
       <Box
@@ -53,8 +53,10 @@ export default function SideMenu() {
           flexDirection: 'column',
         }}
       >
-        <MenuContent />
-        <CardAlert />
+        <MenuContent
+          selectedPage={selectedPage}
+          setSelectedPage={setSelectedPage}
+        />
       </Box>
       <Stack
         direction="row"
@@ -68,16 +70,16 @@ export default function SideMenu() {
       >
         <Avatar
           sizes="small"
-          alt="Riley Carter"
+          alt="Usuario"
           src="/static/images/avatar/7.jpg"
           sx={{ width: 36, height: 36 }}
         />
         <Box sx={{ mr: 'auto' }}>
           <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: '16px' }}>
-            Riley Carter
+            {user?.username || 'Usuario'}
           </Typography>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            riley@email.com
+            {user?.email || 'usuario@email.com'}
           </Typography>
         </Box>
         <OptionsMenu />

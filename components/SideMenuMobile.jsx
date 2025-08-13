@@ -3,63 +3,98 @@ import PropTypes from 'prop-types';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import Drawer, { drawerClasses } from '@mui/material/Drawer';
+import MuiDrawer, { drawerClasses } from '@mui/material/Drawer';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
-import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
-import MenuButton from './MenuButton';
 import MenuContent from './MenuContent';
-import CardAlert from './CardAlert';
+import OptionsMenu from './OptionsMenu';
+import { useUser } from '../src/context/UserContext';
+import { useLogout } from '../src/context/UserLogout';
+import { useNavigate } from 'react-router-dom';
+import { styled } from '@mui/material/styles';
 
-function SideMenuMobile({ open, toggleDrawer }) {
+const drawerWidth = 240;
+
+const Drawer = styled(MuiDrawer)(({ theme }) => ({
+  width: drawerWidth,
+  flexShrink: 0,
+  boxSizing: 'border-box',
+  [`& .${drawerClasses.paper}`]: {
+    width: drawerWidth,
+    boxSizing: 'border-box',
+    backgroundColor: theme.palette.background.paper,
+    maxWidth: '70vw', // para que sea responsive
+  },
+}));
+
+function SideMenuMobile({ open, toggleDrawer, selectedPage, setSelectedPage }) {
+  const { user } = useUser();
+  const logout = useLogout();
+  const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      toggleDrawer(false);
+      navigate('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  // Función para manejar selección en el menú (igual que en SideMenu web)
+  const handleMenuSelect = (pageText) => {
+    setSelectedPage(pageText);
+    toggleDrawer(false);
+  };
+
   return (
     <Drawer
       anchor="right"
       open={open}
-      onClose={toggleDrawer(false)}
-      sx={{
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-        [`& .${drawerClasses.paper}`]: {
-          backgroundImage: 'none',
-          backgroundColor: 'background.paper',
-        },
+      onClose={() => toggleDrawer(false)}
+      variant="temporary"
+      ModalProps={{
+        keepMounted: true, // mejora rendimiento en móviles
+      }}
+      PaperProps={{
+        sx: { maxWidth: '70vw' },
       }}
     >
-      <Stack
-        sx={{
-          maxWidth: '70dvw',
-          height: '100%',
-        }}
-      >
+      <Stack sx={{ height: '100%' }}>
         <Stack direction="row" sx={{ p: 2, pb: 0, gap: 1 }}>
-          <Stack
-            direction="row"
-            sx={{ gap: 1, alignItems: 'center', flexGrow: 1, p: 1 }}
-          >
+          <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexGrow: 1, p: 1 }}>
             <Avatar
               sizes="small"
-              alt="Riley Carter"
+              alt={user?.username || 'Usuario'}
               src="/static/images/avatar/7.jpg"
               sx={{ width: 24, height: 24 }}
             />
             <Typography component="p" variant="h6">
-              Riley Carter
+              {user?.username || 'Usuario'}
             </Typography>
           </Stack>
-          <MenuButton showBadge>
-            <NotificationsRoundedIcon />
-          </MenuButton>
+          <OptionsMenu />
         </Stack>
         <Divider />
         <Stack sx={{ flexGrow: 1 }}>
-          <MenuContent />
-          <Divider />
+          <MenuContent selectedPage={selectedPage} onSelect={handleMenuSelect} />
         </Stack>
-        <CardAlert />
+        <Divider />
         <Stack sx={{ p: 2 }}>
-          <Button variant="outlined" fullWidth startIcon={<LogoutRoundedIcon />}>
-            Logout
+          <Button
+            variant="outlined"
+            fullWidth
+            startIcon={<LogoutRoundedIcon />}
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? 'Cerrando...' : 'Logout'}
           </Button>
         </Stack>
       </Stack>
@@ -68,8 +103,10 @@ function SideMenuMobile({ open, toggleDrawer }) {
 }
 
 SideMenuMobile.propTypes = {
-  open: PropTypes.bool,
+  open: PropTypes.bool.isRequired,
   toggleDrawer: PropTypes.func.isRequired,
+  selectedPage: PropTypes.string.isRequired,
+  setSelectedPage: PropTypes.func.isRequired,
 };
 
 export default SideMenuMobile;

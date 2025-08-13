@@ -10,6 +10,7 @@ import ListItemIcon, { listItemIconClasses } from '@mui/material/ListItemIcon';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import MenuButton from './MenuButton';
+import { useLogout } from '../src/context/UserLogout';
 
 const MenuItem = styled(MuiMenuItem)({
   margin: '2px 0',
@@ -17,13 +18,24 @@ const MenuItem = styled(MuiMenuItem)({
 
 export default function OptionsMenu() {
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false); // nuevo estado
   const open = Boolean(anchorEl);
+  const logout = useLogout();
+
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
-  const handleClose = () => {
-    setAnchorEl(null);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
+
   return (
     <React.Fragment>
       <MenuButton
@@ -37,8 +49,7 @@ export default function OptionsMenu() {
         anchorEl={anchorEl}
         id="menu"
         open={open}
-        onClose={handleClose}
-        onClick={handleClose}
+        onClose={() => setAnchorEl(null)}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         sx={{
@@ -53,14 +64,9 @@ export default function OptionsMenu() {
           },
         }}
       >
-        <MenuItem onClick={handleClose}>Profile</MenuItem>
-        <MenuItem onClick={handleClose}>My account</MenuItem>
-        <Divider />
-        <MenuItem onClick={handleClose}>Add another account</MenuItem>
-        <MenuItem onClick={handleClose}>Settings</MenuItem>
-        <Divider />
         <MenuItem
-          onClick={handleClose}
+          onClick={handleLogout}
+          disabled={isLoggingOut}
           sx={{
             [`& .${listItemIconClasses.root}`]: {
               ml: 'auto',
@@ -68,7 +74,7 @@ export default function OptionsMenu() {
             },
           }}
         >
-          <ListItemText>Logout</ListItemText>
+          <ListItemText>{isLoggingOut ? 'Cerrando...' : 'Logout'}</ListItemText>
           <ListItemIcon>
             <LogoutRoundedIcon fontSize="small" />
           </ListItemIcon>
