@@ -8,6 +8,8 @@ import CustomizedDataGrid from './CustomizedDataGrid';
 import PageViewsBarChart from './PageViewsBarChart';
 import SessionsChart from './SessionsChart';
 import StatCard from './StatCard';
+import ChartSalesByStatus from './ChartSalesByStatus';
+
 
 {/**INICIO ESTADISTICAS*/}
 
@@ -16,7 +18,7 @@ export default function MainGridEstadistics() {
     <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' }, mx: 'auto' }}>
       {/* Título */}
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        Overview
+        Estadísticas
       </Typography>
 
       {/* Gráficos */}
@@ -25,11 +27,14 @@ export default function MainGridEstadistics() {
         spacing={2}
         sx={{ mb: 2 }}
       >
-        {/* Gráfico de sesiones (ocupa 100% en móvil, 12 columnas en desktop) */}
+        {/* Gráfico de total de Ventas */}
         <Grid item xs={12} md={12}>
           <SessionsChart />
         </Grid>
-
+        {/* Gráfico de total de Ventas por Estatus */}
+        <Grid item xs={12} md={12}>
+          <ChartSalesByStatus />
+        </Grid>
         {/* Puedes agregar más tarjetas o gráficos aquí si deseas */}
         {/* <Grid item xs={12} md={6}>...</Grid> */}
       </Grid>
