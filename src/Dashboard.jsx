@@ -42,7 +42,7 @@ export default function Dashboard(props) {
       <CssBaseline enableColorScheme />
       <Box sx={{ display: 'flex' }}>
         <SideMenu selectedPage={selectedPage} setSelectedPage={setSelectedPage} />
-        <AppNavbar />
+        <AppNavbar selectedPage={selectedPage} setSelectedPage={setSelectedPage} />
         <Box
           component="main"
           sx={(theme) => ({

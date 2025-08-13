@@ -49,15 +49,15 @@ function SideMenuMobile({ open, toggleDrawer, selectedPage, setSelectedPage }) {
 
   // Función para manejar selección en el menú (igual que en SideMenu web)
   const handleMenuSelect = (pageText) => {
+    toggleDrawer(false)();
     setSelectedPage(pageText);
-    toggleDrawer(false);
   };
 
   return (
     <Drawer
       anchor="right"
       open={open}
-      onClose={() => toggleDrawer(false)}
+      onClose={() => toggleDrawer(false)()}
       variant="temporary"
       ModalProps={{
         keepMounted: true, // mejora rendimiento en móviles
@@ -83,7 +83,10 @@ function SideMenuMobile({ open, toggleDrawer, selectedPage, setSelectedPage }) {
         </Stack>
         <Divider />
         <Stack sx={{ flexGrow: 1 }}>
-          <MenuContent selectedPage={selectedPage} onSelect={handleMenuSelect} />
+          <MenuContent
+            selectedPage={selectedPage}
+            setSelectedPage={setSelectedPage}
+          />
         </Stack>
         <Divider />
         <Stack sx={{ p: 2 }}>
