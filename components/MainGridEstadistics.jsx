@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import SessionsChart from './SessionsChart';
 import ChartSalesByStatus from './ChartSalesByStatus';
 import Productos from './Productos';
+import SLAPacker from './SLAPacker';
 
 export default function MainGridEstadistics() {
   return (
@@ -22,9 +23,11 @@ export default function MainGridEstadistics() {
         <Grid item xs={12} md={6}>
           <ChartSalesByStatus />
         </Grid>
-
         <Grid item xs={12}>
           <Productos/>
+        </Grid>
+        <Grid item xs={12}>
+          <SLAPacker/>
         </Grid>
       </Grid>
     </Box>

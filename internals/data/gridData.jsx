@@ -2,6 +2,7 @@ import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
+import Button from '@mui/material/Button';
 
 function getDaysInMonth(month, year) {
   const date = new Date(year, month, 0);
@@ -78,6 +79,37 @@ export function renderAvatar(params) {
   );
 }
 
+// === Helper para descargar PDF desde base64 o byte[] ===
+function downloadEtiqueta(value, fileName = 'etiqueta.pdf') {
+  let blob;
+
+  if (Array.isArray(value)) {
+    const uint8 = new Uint8Array(value);
+    blob = new Blob([uint8], { type: 'application/pdf' });
+  } else if (typeof value === 'string') {
+    let base64 = value;
+    const match = base64.match(/^data:.*;base64,(.*)$/);
+    if (match) base64 = match[1];
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+    blob = new Blob([bytes], { type: 'application/pdf' });
+  } else {
+    console.warn('Formato de etiqueta no soportado:', typeof value);
+    return;
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export const columns = [
   {
     field: 'ventas_noventa',
@@ -101,31 +133,122 @@ export const columns = [
     field: 'ventas_estado',
     headerName: 'Ventas Estado',
     flex: 0.5,
-    minWidth: 200,
-  },
+    minWidth: 300,
+    renderCell: (params) => {
+      const isCancelada = (params.value || '').toLowerCase().includes('venta cancelada');
+      const hasEmpacador = params.row?.empacador != null && params.row.empacador !== '';
+  
+      const shouldMarkRed = isCancelada && hasEmpacador;
+  
+      return (
+        <div
+          style={{
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+            lineHeight: '1.2',
+            padding: '4px 8px',
+            fontWeight: shouldMarkRed ? 'bold' : 'normal',
+            backgroundColor: shouldMarkRed ? '#f8d7da' : 'transparent',
+            color: shouldMarkRed ? '#721c24' : 'inherit',
+            borderRadius: shouldMarkRed ? '6px' : '0px',
+          }}
+        >
+          {params.value}
+        </div>
+      );
+    },
+  },  
   {
     field: 'surtidor',
     headerName: 'Surtidor',
     flex: 0.5,
-    minWidth: 200,
+    minWidth: 150,
   },
   {
     field: 'empacador',
     headerName: 'Empacador',
     flex: 0.5,
-    minWidth: 200,
+    minWidth: 150,
   },
   {
     field: 'estadoVenta',
     headerName: 'Estado',
     flex: 0.5,
-    minWidth: 200,
-  },
+    minWidth: 125,
+    renderCell: (params) => {
+      const estado = params.value ?? '';
+      let color = 'default';
+      let textColor = '#000';
+      let bgColor = '#e0e0e0';
+  
+      switch (estado.toUpperCase()) {
+        case 'POR SURTIR':
+          color = 'warning';
+          bgColor = '#fff3cd'; 
+          textColor = '#856404';
+          break;
+        case 'EMPACADO':
+          color = 'info';
+          bgColor = '#d1ecf1';
+          textColor = '#0c5460';
+          break;
+        case 'SURTIDO':
+          color = 'success';
+          bgColor = '#d4edda'; 
+          textColor = '#155724';
+          break;
+        default:
+          bgColor = '#f8f9fa';
+          textColor = '#6c757d';
+          break;
+      }
+  
+      return (
+        <div
+          style={{
+            backgroundColor: bgColor,
+            color: textColor,
+            fontWeight: 'bold',
+            padding: '4px 8px',
+            borderRadius: '8px',
+            textAlign: 'center',
+            width: '100%',
+          }}
+        >
+          {estado}
+        </div>
+      );
+    },
+  },  
   {
-    field: 'ventas_descripcionestado',
-    headerName: 'Descripción del estado',
+    field: 'etiqueta',
+    headerName: 'Etiqueta',
     flex: 0.5,
-    minWidth: 200,
+    minWidth: 110,
+    sortable: false,
+    filterable: false,
+    renderCell: (params) => {
+      const v = params.value;
+      const hasBytes =
+        (typeof v === 'string' && v.trim() !== '') ||
+        (Array.isArray(v) && v.length > 0);
+
+      if (!hasBytes) return '';
+
+      const fileName = `etiqueta_${params.row?.ventas_noventa ?? 'documento'}.pdf`;
+
+      const onClick = (e) => {
+        e.stopPropagation(); // evita seleccionar la fila
+        downloadEtiqueta(v, fileName);
+      };
+
+      return (
+        <Button variant="outlined" size="small" onClick={onClick}>
+          Descargar
+        </Button>
+      );
+    },
   },
   {
     field: 'ventas_paquetevarios',
@@ -141,6 +264,25 @@ export const columns = [
     align: 'right',
     flex: 1,
     minWidth: 80,
+    renderCell: (params) => {
+      const valor = params.value ?? 0;
+      return (
+        <span
+          style={{
+            fontWeight: 'bold',
+            color: valor > 0 ? '#1976d2' : '#555',
+          }}
+        >
+          {valor}
+        </span>
+      );
+    },
+  },
+  {
+    field: 'ventas_descripcionestado',
+    headerName: 'Descripción del estado',
+    flex: 0.5,
+    minWidth: 200,
   },
   {
     field: 'ventas_ingresosproducto',
@@ -420,6 +562,7 @@ export const columnGroupingModel = [
       { field: 'surtidor' },
       { field: 'empacador' },
       { field: 'estadoVenta' },
+      { field: 'etiqueta' },
       { field: 'ventas_descripcionestado' },
       { field: 'ventas_paquetevarios' },
       { field: 'ventas_unidades' },

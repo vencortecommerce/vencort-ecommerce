@@ -21,7 +21,14 @@ export default function CustomizedDataGrid() {
   const [selectedEmpacador, setSelectedEmpacador] = React.useState('');
   const navigate = useNavigate();
 
+  // ====== Auto-refresh======
+  const REFRESH_MS = 60000; // 60s
+  const mountedRef = React.useRef(true);
+  const isFetchingRef = React.useRef(false);
+
   const fetchData = async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     setLoading(true);
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     const config = {
@@ -37,11 +44,12 @@ export default function CustomizedDataGrid() {
         id: item.idmercadolibre,
         ...item,
       }));
-      setRows(dataWithId);
+      if (mountedRef.current) setRows(dataWithId);
     } catch (error) {
       console.error('Error cargando datos:', error);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
@@ -64,9 +72,28 @@ export default function CustomizedDataGrid() {
   };
 
   React.useEffect(() => {
-    console.log('CARGA DE NUEVO');
+    mountedRef.current = true;
     fetchData();  
     fetchEmpacadores();
+
+    const intervalId = setInterval(() => {
+      if (!document.hidden) {
+        fetchData();
+      }
+    }, REFRESH_MS);
+
+    const onVisibility = () => { if (!document.hidden) fetchData(); };
+    const onFocus = () => fetchData();
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      mountedRef.current = false;
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);  
 
   const handleAsignarSurtidor = async () => {
@@ -83,9 +110,9 @@ export default function CustomizedDataGrid() {
       };
       const response = await clienteAxios.post(`/api/ventas/asignarSurtidor?${queryParams}`, {}, config);
       setSnackbar({ open: true, message: 'Procesado correctamente', severity: 'success' });
+
       await fetchData();
       setSelectedIds([]);
-      window.location.reload();
     } catch (error) {
       if (error.response?.status === 401) {
         const errorMessage = error.response.data?.error || 'Perfil no correspondiente a Surtidor .';
@@ -114,6 +141,8 @@ export default function CustomizedDataGrid() {
     try {
       const response = await clienteAxios.post(`/api/empacador/asignarEmpacador?${queryParams}`, {}, config);
       setSnackbar({ open: true, message: 'Empacador asignado correctamente', severity: 'success' });
+
+      // 🔁 Actualiza la tabla principal sin refresh
       await fetchData();
       setSelectedIds([]);
       setOpenEmpacadorModal(false);

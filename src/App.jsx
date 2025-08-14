@@ -14,6 +14,7 @@ function App() {
           <Route path="/estadisticas" element={<Dashboard initialPage="Estadísticas" />} />
           <Route path="/registro-usuario" element={<Dashboard initialPage="Registro de Usuario" />} />
           <Route path="/registro-empacadores" element={<Dashboard initialPage="Registro de Empacadores" />} />
+          <Route path="/alertas" element={<Dashboard initialPage="Alertas" />} />
           <Route path="/venta/:id" element={<MainGridSaleDetail />} />
         </Routes>
       </Router></UserProvider>

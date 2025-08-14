@@ -20,7 +20,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import clienteAxios from '../src/context/Config';
 
-export default function Productos() {
+export default function SLAPacker() {
   const [fechaInicial, setFechaInicial] = React.useState(null);
   const [fechaFinal, setFechaFinal] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
@@ -40,14 +40,14 @@ export default function Productos() {
       };
 
       const response = await clienteAxios.post(
-        `/api/reportes/productos?fechaInicial=${fInicial}&fechaFinal=${fFinal}`,
+        `/api/reportes/slaempacador?fechaInicial=${fInicial}&fechaFinal=${fFinal}`,
         {},
         config
       );
 
       setRows(response.data);
     } catch (error) {
-      console.error('Error al consultar los productos más vendidos:', error);
+      console.error('Error al consultar los SLA Empacador más vendidos:', error);
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ export default function Productos() {
   return (
     <Card variant="outlined" sx={{ width: '100%' }}>
       <CardContent>
-        <Title>Productos más Vendidos</Title>
+        <Title>SLA Empacador</Title>
 
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
@@ -108,25 +108,24 @@ export default function Productos() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>SKU</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Unidades</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Origen</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Empacador</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Pedidos Atendidos</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Pedis Cumplimiento SL</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Porcentaje Cumplimiento</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {rows.map((row, index) => (
                   <TableRow key={index}>
-                    <TableCell>{row.sku}</TableCell>
-                    <TableCell>{row.unidades}</TableCell>
-                    <TableCell>${row.total?.toFixed(2)}</TableCell>
-                    <TableCell>{row.origen}</TableCell>
+                    <TableCell>{row.empacador}</TableCell>
+                    <TableCell>{row.pedidos}</TableCell>
+                    <TableCell>{row.pedidosSLA}</TableCell>
+                    <TableCell>{row.porcentaje}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
             <Box sx={{ mt: 3 }}>
-             
             </Box>
           </>
         )}

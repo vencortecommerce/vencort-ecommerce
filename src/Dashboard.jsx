@@ -11,6 +11,8 @@ import MainGridUserRegister from '../components/MainGridUserRegister';
 import MainGridPackerRegister from '../components/MainGridPackerRegister'; 
 import MainGridSale from '../components/MainGridSale'; 
 import MainGridSaleDetail from '../components/MainGridSaleDetail'; 
+import MainGridAlerts from '../components/MainGridAlerts'; 
+
 
 import SideMenu from '../components/SideMenu';
 import AppTheme from '../theme/AppTheme';
@@ -67,6 +69,8 @@ export default function Dashboard(props) {
             {selectedPage === 'Estadísticas' && <MainGridEstadistics />}
             {selectedPage === 'Registro de Usuario' && <MainGridUserRegister/>}
             {selectedPage === 'Registro de Empacadores' && <MainGridPackerRegister/>}
+            {selectedPage === 'Alertas' && <MainGridAlerts/>}
+
           </Stack>
         </Box>
       </Box>
