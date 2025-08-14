@@ -109,8 +109,8 @@ export default function SLAPacker() {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>Empacador</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Pedidos Atendidos</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Pedis Cumplimiento SL</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Total Pedidos Atendidos</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Pedidos Cumplimiento SL</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Porcentaje Cumplimiento</TableCell>
                 </TableRow>
               </TableHead>
