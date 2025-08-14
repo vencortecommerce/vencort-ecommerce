@@ -1,17 +1,10 @@
 import * as React from 'react';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Copyright from '../internals/components/Copyright';
-import CustomizedDataGrid from './CustomizedDataGrid';
-import PageViewsBarChart from './PageViewsBarChart';
 import SessionsChart from './SessionsChart';
-import StatCard from './StatCard';
 import ChartSalesByStatus from './ChartSalesByStatus';
-
-
-{/**INICIO ESTADISTICAS*/}
+import Productos from './Productos';
 
 export default function MainGridEstadistics() {
   return (
@@ -21,22 +14,18 @@ export default function MainGridEstadistics() {
         Estadísticas
       </Typography>
 
-      {/* Gráficos */}
-      <Grid
-        container
-        spacing={2}
-        sx={{ mb: 2 }}
-      >
-        {/* Gráfico de total de Ventas */}
-        <Grid item xs={12} md={12}>
+      {/* Layout de gráficos */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={6}>
           <SessionsChart />
         </Grid>
-        {/* Gráfico de total de Ventas por Estatus */}
-        <Grid item xs={12} md={12}>
+        <Grid item xs={12} md={6}>
           <ChartSalesByStatus />
         </Grid>
-        {/* Puedes agregar más tarjetas o gráficos aquí si deseas */}
-        {/* <Grid item xs={12} md={6}>...</Grid> */}
+
+        <Grid item xs={12}>
+          <Productos/>
+        </Grid>
       </Grid>
     </Box>
   );

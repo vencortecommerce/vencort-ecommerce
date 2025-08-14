@@ -14,6 +14,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
+import Title from './Title';
 
 import clienteAxios from '../src/context/Config';
 
@@ -213,9 +214,10 @@ export default function ChartSalesByStatus() {
           </Alert>
         )}
 
-        <Typography component="h2" variant="subtitle2" sx={{ mb: 1 }}>
+      {/*   <Typography component="h2" variant="subtitle2" sx={{ mb: 1 }}>
           Ventas por Estatus 
-        </Typography>
+        </Typography>*/}
+        <Title>Ventas por Estatus</Title>
 
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <PieChart

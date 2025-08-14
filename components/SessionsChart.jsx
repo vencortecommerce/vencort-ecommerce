@@ -11,6 +11,7 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import { LineChart } from '@mui/x-charts/LineChart';
 import clienteAxios from '../src/context/Config';
+import Title from './Title';
 
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -132,7 +133,8 @@ export default function SessionsChart() {
             </Button>
           </Stack>
         </LocalizationProvider>
-
+          {/* Título y resumen */}
+          <Title>Ventas Realizadas</Title>
         {/* Loader mientras carga */}
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
@@ -140,10 +142,7 @@ export default function SessionsChart() {
           </Box>
         ) : (
           <>
-            {/* Título y resumen */}
-            <Typography component="h2" variant="subtitle2" gutterBottom>
-              Ventas Realizadas
-            </Typography>
+            
             <Stack sx={{ justifyContent: 'space-between' }}>
               <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
                 <Typography variant="h4" component="p">
