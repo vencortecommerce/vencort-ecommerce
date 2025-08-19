@@ -5,6 +5,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import clienteAxios from '../src/context/Config';
 import { Box } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 export default function MainGridAlerts() {
   const [alerts, setAlerts] = React.useState([]);
@@ -17,6 +18,7 @@ export default function MainGridAlerts() {
     detalleAlerta: '',
     valor: 0,
   });
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const fetchAlerts = async () => {
@@ -34,8 +36,12 @@ export default function MainGridAlerts() {
         }));
         setAlerts(mapped);
       } catch (error) {
-        console.error('Error al cargar alertas:', error);
-        setError('Error al cargar alertas.');
+        if (error?.response?.status === 401) {
+          navigate('/');
+        }else{
+          console.error('Error al cargar alertas:', error);
+          setError('Error al cargar alertas.');
+        }
       } finally {
         setLoadingTable(false);
       }

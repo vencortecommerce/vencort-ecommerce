@@ -11,7 +11,6 @@ import SideMenu from './SideMenu';
 import AppTheme from '../theme/AppTheme';
 import Seccion from '../internals/components/Seccion';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
-
 import {
   chartsCustomizations,
   dataGridCustomizations,
@@ -47,7 +46,11 @@ export default function MainGridSaleDetail(props) {
         const response = await clienteAxios.get(`/api/ventas/detalle?idmercadolibre=${id}`, config);
         setDetalle(response.data);
       } catch (err) {
-        setError('No se pudo cargar el detalle de la venta.');
+        if (error?.response?.status === 401) {
+          navigate('/');
+        }else{
+          setError('No se pudo cargar el detalle de la venta.');
+        }
       } finally {
         setLoading(false);
       }

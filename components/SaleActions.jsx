@@ -12,6 +12,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ClearIcon from '@mui/icons-material/Clear';
 import clienteAxios from '../src/context/Config';
+import { useNavigate } from 'react-router-dom';
 
 export default function SaleActions() {
   const fileInputRef = useRef(null);
@@ -23,7 +24,7 @@ export default function SaleActions() {
     message: '',
     severity: 'success',
   });
-
+  const navigate = useNavigate();
   const handleDownloadTemplate = async () => {
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
 
@@ -43,8 +44,12 @@ export default function SaleActions() {
       link.click();
       link.remove();
     } catch (error) {
-      console.error('Error descargando la plantilla:', error);
-      alert('No se pudo descargar la plantilla. Intenta más tarde.');
+      if (error?.response?.status === 401) {
+        navigate('/');
+      }else{
+        console.error('Error descargando la plantilla:', error);
+        alert('No se pudo descargar la plantilla. Intenta más tarde.');
+      }
     }
   };
 

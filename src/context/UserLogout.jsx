@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useUser } from './UserContext';
-import clienteAxios from './Config'; // Ajusta la ruta según tu proyecto
-
+import clienteAxios from './Config'; 
 export function useLogout() {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
@@ -11,7 +10,7 @@ export function useLogout() {
       if (user?.token) {
         await clienteAxios.post(
           '/api/usuarios/cierreSesion',
-          {}, // cuerpo vacío porque el POST no envía datos
+          {},
           {
             headers: {
               Authorization: `Bearer ${user.token}`,

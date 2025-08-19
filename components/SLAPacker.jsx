@@ -19,12 +19,14 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import clienteAxios from '../src/context/Config';
+import { useNavigate } from 'react-router-dom';
 
 export default function SLAPacker() {
   const [fechaInicial, setFechaInicial] = React.useState(null);
   const [fechaFinal, setFechaFinal] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const [rows, setRows] = React.useState([]);
+  const navigate = useNavigate();
 
   const formatDate = (date) => date.toISOString().split('T')[0]; // YYYY-MM-DD
 
@@ -47,7 +49,11 @@ export default function SLAPacker() {
 
       setRows(response.data);
     } catch (error) {
-      console.error('Error al consultar los SLA Empacador más vendidos:', error);
+      if (error?.response?.status === 401 && error?.response?.data?.error === 'Acceso no autorizado') {
+          navigate('/');
+      }else{
+        console.error('Error al consultar los SLA Empacador más vendidos:', error);
+      }
     } finally {
       setLoading(false);
     }

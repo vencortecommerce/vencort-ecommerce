@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import clienteAxios from '../src/context/Config';
+import { useNavigate } from 'react-router-dom';
 
 export default function MainGridUserRegister() {
   const [open, setOpen] = React.useState(false);
@@ -15,6 +16,7 @@ export default function MainGridUserRegister() {
   const [formData, setFormData] = React.useState({
     name: '', lastName: '', username: '', email: '', description: '', role: '',
   });
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const fetchUsers = async () => {
@@ -37,8 +39,12 @@ export default function MainGridUserRegister() {
         }));
         setUsers(mappedUsers);
       } catch (error) {
-        console.error('Error al cargar usuarios:', error);
-        setError('Error al cargar usuarios.');
+        if (error?.response?.status === 401) {
+          navigate('/');
+        }else{
+          console.error('Error al cargar usuarios:', error);
+          setError('Error al cargar usuarios.');
+        }
       } finally {
         setLoading(false); // Se oculta el loader solo después de obtener datos
       }

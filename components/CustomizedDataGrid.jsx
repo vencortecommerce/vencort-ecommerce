@@ -46,7 +46,11 @@ export default function CustomizedDataGrid() {
       }));
       if (mountedRef.current) setRows(dataWithId);
     } catch (error) {
-      console.error('Error cargando datos:', error);
+      if (error?.response?.status === 401) {
+        navigate('/');
+      }else{
+        console.error('Error cargando datos:', error);
+      }
     } finally {
       if (mountedRef.current) setLoading(false);
       isFetchingRef.current = false;

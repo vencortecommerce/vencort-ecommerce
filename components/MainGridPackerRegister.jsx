@@ -5,6 +5,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import clienteAxios from '../src/context/Config';
 import { Box } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 export default function MainGridPackerRegister() {
   const [packers, setPackers] = React.useState([]);
@@ -17,6 +18,7 @@ export default function MainGridPackerRegister() {
     empacador_correo: '',
     empacador_activo: 'true',
   });
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const fetchPackers = async () => {
@@ -32,8 +34,12 @@ export default function MainGridPackerRegister() {
         }));
         setPackers(mapped);
       } catch (error) {
-        console.error('Error al cargar empacadores:', error);
-        setError('Error al cargar empacadores.');
+        if (error?.response?.status === 401) {
+          navigate('/');
+        }else{
+          console.error('Error al cargar empacadores:', error);
+          setError('Error al cargar empacadores.');
+        }
       } finally {
         setLoadingTable(false);
       }
