@@ -11,25 +11,33 @@ export default function MainGrid() {
     <Box
       sx={{
         width: '100%',
+        height: '100vh', // ocupa toda la altura del navegador
         maxWidth: { xs: '100%', md: '1700px' },
-        mx: 'auto', // centrar horizontalmente
-        px: 2, // padding horizontal para evitar que se pegue a los bordes
+        mx: 'auto',
+        px: 2,
+        py: 2,
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Detalle
       </Typography>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} lg={9}>
+      <Grid container spacing={2} sx={{ flexGrow: 1, minHeight: 0 }}>
+        <Grid item xs={12} lg={9} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <Box sx={{ mb: 2 }}>
+            <SaleActions />
+          </Box>
+
           <Box
             sx={{
-              width: '95%',
-              overflowX: 'auto',
+              flexGrow: 1,
+              height: '100%',
+              overflow: 'auto',
             }}
           >
-            <SaleActions />
-        
             <CustomizedDataGrid />
           </Box>
         </Grid>
