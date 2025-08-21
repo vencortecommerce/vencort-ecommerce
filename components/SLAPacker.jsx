@@ -121,14 +121,22 @@ export default function SLAPacker() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{row.empacador}</TableCell>
-                    <TableCell>{row.pedidos}</TableCell>
-                    <TableCell>{row.pedidosSLA}</TableCell>
-                    <TableCell>{row.porcentaje}</TableCell>
+                {Array.isArray(rows) && rows.length > 0 ? (
+                  rows.map((row, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{row.empacador}</TableCell>
+                      <TableCell>{row.pedidos}</TableCell>
+                      <TableCell>{row.pedidosSLA}</TableCell>
+                      <TableCell>{row.porcentaje}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      No hay datos disponibles
+                    </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
             <Box sx={{ mt: 3 }}>

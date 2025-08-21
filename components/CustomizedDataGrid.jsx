@@ -70,7 +70,7 @@ export default function CustomizedDataGrid() {
       const activos = response.data.filter(emp => emp.empacador_activo);
       setEmpacadores(activos);
     } catch (error) {
-      console.error('Error al cargar empacadores:', error);
+      console.error(':', error);
       setSnackbar({ open: true, message: 'Error al cargar empacadores', severity: 'error' });
     }
   };

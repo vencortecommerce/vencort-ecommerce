@@ -76,11 +76,9 @@ export default function SignIn() {
         setUser({ username: usernameResult, email, token });
       }
 
-      if (remember) {
-        localStorage.setItem('authToken', token);
-      } else {
-        sessionStorage.setItem('authToken', token);
-      }
+      localStorage.removeItem('token');
+      localStorage.setItem('authToken', token);
+      
       localStorage.setItem('user', JSON.stringify(result));
       setSnackbarMessage('Sesión iniciada correctamente');
       setSnackbarSeverity('success');
