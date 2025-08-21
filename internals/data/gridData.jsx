@@ -133,7 +133,7 @@ export const columns = [
     field: 'ventas_estado',
     headerName: 'Ventas Estado',
     flex: 0.5,
-    minWidth: 300,
+    minWidth: 200,
     renderCell: (params) => {
       const isCancelada = (params.value || '').toLowerCase().includes('venta cancelada');
       const hasEmpacador = params.row?.empacador != null && params.row.empacador !== '';

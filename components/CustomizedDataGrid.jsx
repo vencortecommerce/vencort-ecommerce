@@ -22,7 +22,7 @@ export default function CustomizedDataGrid() {
   const navigate = useNavigate();
 
   // ====== Auto-refresh======
-  const REFRESH_MS = 60000; // 60s
+  const REFRESH_MS = 300000; // 5min
   const mountedRef = React.useRef(true);
   const isFetchingRef = React.useRef(false);
 
@@ -71,7 +71,7 @@ export default function CustomizedDataGrid() {
       setEmpacadores(activos);
     } catch (error) {
       console.error(':', error);
-      setSnackbar({ open: true, message: 'Error al cargar empacadores', severity: 'error' });
+      setSnackbar({ open: true, message: 'No se encontró información de Empacadores', severity: 'error' });
     }
   };
 
@@ -206,6 +206,55 @@ export default function CustomizedDataGrid() {
         }
         initialState={{
           pagination: { paginationModel: { pageSize: 20 } },
+          columns: {
+            columnVisibilityModel: {
+              etiqueta: false,
+              ventas_descripcionestado: false,
+              ventas_ingresosproducto: false,
+              ventas_ingresosenvio: false,
+              ventas_cargoventa: false,
+              ventas_costosenvio: false,
+              ventas_anulacionesreembolsos: false,
+              ventas_totalmxn: false,
+              publicidad_ventapublicidad: false,
+              publicaciones_sku: false,
+              publicaciones_titulopublicacion: false,
+              publicaciones_variante: false,
+              publicaciones_tipopublicacion: false,
+              facturacion_facturaadjunta: false,
+              facturacion_datospersonalesempresa: false,
+              facturacion_tiponumerodocumento: false,
+              facturacion_direccion: false,
+              facturacion_tipocontribuyente: false,
+              facturacion_cfdi: false,
+              facturacion_tipousuario: false,
+              facturacion_regimenfiscal: false,
+              compradores_comprador: false,
+              compradores_ife: false,
+              compradores_domicilio: false,
+              compradores_municipioalcaldia: false,
+              compradores_estado: false,
+              compradores_codigopostal: false,
+              compradores_pais: false,
+              envios_formaentrega: false,
+              envios_fechaencamino: false,
+              envios_fechaentregado: false,
+              envios_transportista: false,
+              envios_numeroseguimiento: false,
+              envios_urlseguimiento: false,
+              devoluciones_unidades: false,
+              devoluciones_formaentrega: false,
+              devoluciones_fechaencamino: false,
+              devoluciones_fechaentregado: false,
+              devoluciones_transportista: false,
+              devoluciones_numeroseguimiento: false,
+              devoluciones_urlseguimiento: false,
+              reclamos_unidades: false,
+              reclamos_reclamoabierto: false,
+              reclamos_reclamocerrado: false,
+              reclamos_conmediacion: false,
+            },
+          },
         }}
         pageSizeOptions={[10, 20, 50]}
         disableColumnResize

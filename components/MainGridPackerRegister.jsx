@@ -47,9 +47,7 @@ export default function MainGridPackerRegister() {
     } catch (error) {
       if (error?.response?.status === 401) {
         navigate('/');
-      } else {
-        console.error('Error al cargar empacadores:', error);
-      }
+      } 
     } finally {
       setLoadingTable(false);
     }
