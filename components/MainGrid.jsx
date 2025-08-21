@@ -33,15 +33,6 @@ export default function MainGrid() {
             <CustomizedDataGrid />
           </Box>
         </Grid>
-
-        <Grid item xs={12} lg={3}>
-          <Stack
-            gap={2}
-            direction={{ xs: 'column', sm: 'row', lg: 'column' }}
-          >
-            {/* Aquí pones los elementos del Stack si hay */}
-          </Stack>
-        </Grid>
       </Grid>
     </Box>
   );
