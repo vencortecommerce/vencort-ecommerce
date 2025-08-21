@@ -11,7 +11,7 @@ export default function MainGrid() {
     <Box
       sx={{
         width: '100%',
-        height: '100vh', // ocupa toda la altura del navegador
+        height: '100%',
         maxWidth: { xs: '100%', md: '1700px' },
         mx: 'auto',
         px: 2,
