@@ -208,7 +208,6 @@ export default function CustomizedDataGrid() {
           pagination: { paginationModel: { pageSize: 20 } },
           columns: {
             columnVisibilityModel: {
-              etiqueta: false,
               ventas_descripcionestado: false,
               ventas_ingresosproducto: false,
               ventas_ingresosenvio: false,
