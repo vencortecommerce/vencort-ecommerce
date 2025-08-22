@@ -112,7 +112,7 @@ export default function MainGridAlerts() {
 
   return (
     <div style={{ padding: 20 }}>
-      <Typography variant="h6" gutterBottom>Registrar nueva alerta</Typography>
+      <Typography variant="h6" gutterBottom>Registrar Nueva Alerta</Typography>
 
       <Box mb={4}>
         <form onSubmit={handleSubmit}>
