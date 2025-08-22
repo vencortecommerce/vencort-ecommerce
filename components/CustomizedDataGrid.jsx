@@ -22,7 +22,7 @@ export default function CustomizedDataGrid() {
   const navigate = useNavigate();
 
   // ====== Auto-refresh======
-  const REFRESH_MS = 300000; // 5min
+  const REFRESH_MS = 600000; // 5min
   const mountedRef = React.useRef(true);
   const isFetchingRef = React.useRef(false);
 

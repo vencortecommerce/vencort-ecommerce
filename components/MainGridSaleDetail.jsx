@@ -105,6 +105,11 @@ export default function MainGridSaleDetail(props) {
                 <>
                   <Divider sx={{ my: 3 }} />
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Box mt={2}>
+                    <Button variant="contained" color="primary" onClick={() => navigate(-1)}>
+                      Volver al listado de Ventas
+                    </Button>
+                  </Box>
                     <Typography component="h2" variant="h6">
                       Detalle de Venta - No {detalle.ventas_noventa}
                     </Typography>
@@ -260,11 +265,6 @@ export default function MainGridSaleDetail(props) {
                   }} />
                 </>
               )}
-              <Box mt={2}>
-                <Button variant="contained" color="primary" onClick={() => navigate(-1)}>
-                  Volver al listado de Ventas
-                </Button>
-              </Box>
             </Box>
           </Stack>
         </Box>
