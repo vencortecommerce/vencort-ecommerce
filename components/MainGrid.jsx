@@ -12,13 +12,7 @@ export default function MainGrid() {
       sx={{
         width: '100%',
         height: '100%',
-        maxWidth: { xs: '100%', md: '1700px' },
-        mx: 'auto',
-        px: 2,
-        py: 2,
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
+        maxWidth: { xs: '100%', md: '1700px' }
       }}
     >
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>

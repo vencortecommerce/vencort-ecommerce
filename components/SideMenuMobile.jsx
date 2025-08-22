@@ -25,7 +25,7 @@ const Drawer = styled(MuiDrawer)(({ theme }) => ({
     width: drawerWidth,
     boxSizing: 'border-box',
     backgroundColor: theme.palette.background.paper,
-    maxWidth: '70vw', // para que sea responsive
+    maxWidth: '70vw',
   },
 }));
 
