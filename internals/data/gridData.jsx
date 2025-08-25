@@ -1,8 +1,106 @@
+import React, { useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
-
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
-import Button from '@mui/material/Button';
+import { useEmpacadoresActivos } from '../../components/useEmpacadores';
+import {
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  FormControl, InputLabel, Select, MenuItem, Button, Snackbar, Alert
+} from '@mui/material';
+import clienteAxios from '../../src/context/Config';
+import { Link } from 'react-router-dom';
+
+export const EmpacadorCell = ({ row }) => {
+  const empacadores = useEmpacadoresActivos();
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+
+  const handleAsignar = async () => {
+    setAssigning(true);
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },      };
+
+      const queryParams = [`idempacador=${parseInt(selected)}`, `idmercadolibre=${row.idmercadolibre}`].join('&');
+      const response = await clienteAxios.post(`/api/empacador/asignarEmpacador?${queryParams}`, {}, config);
+      setShowSnackbar(true);
+      row.empacador = empacadores.find(e => e.id_empacador === parseInt(selected))?.empacador_nombre ?? 'Asignado';
+    } catch (e) {
+      console.error('Error al asignar empacador', e);
+    } finally {
+      setAssigning(false);
+      setOpen(false);
+    }
+  };
+
+  return (
+    <>
+      {row.empacador ? (
+        <div>{row.empacador}</div>
+      ) : (
+        <Button
+          variant="contained"
+          color="success"
+          size="small"
+          onClick={() => setOpen(true)}
+        >
+          Seleccionar
+        </Button>
+      )}
+
+      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Selecciona Empacador</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth>
+            <InputLabel id="empacador-label">Empacador</InputLabel>
+            <Select
+              labelId="empacador-label"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              label="Empacador"
+            >
+              {empacadores.map(emp => (
+                <MenuItem key={emp.id_empacador} value={emp.id_empacador}>
+                  {emp.empacador_nombre} - {emp.empacador_correo}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cerrar</Button>
+          <Button
+            onClick={handleAsignar}
+            disabled={!selected || assigning}
+            variant="contained"
+            color="primary"
+          >
+            {assigning ? 'Asignando...' : 'Asignar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={showSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setShowSnackbar(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setShowSnackbar(false)} severity="success" sx={{ width: '100%' }}>
+          Empacador actualizado correctamente
+        </Alert>
+      </Snackbar>
+    </>
+  );
+};
+
 
 function getDaysInMonth(month, year) {
   const date = new Date(year, month, 0);
@@ -112,10 +210,55 @@ function downloadEtiqueta(value, fileName = 'etiqueta.pdf') {
 
 export const columns = [
   {
+    field: 'publicaciones_titulopublicacion',
+    headerName: 'Título de la publicación',
+    flex: 2,
+    minWidth: 200,
+  },
+  {
     field: 'ventas_noventa',
     headerName: 'No Venta',
     flex: 0.5,
-    minWidth: 150,
+    minWidth: 160,
+    renderCell: (params) => {
+      const noventa = params.value;
+      const origen = params.row?.origen;
+      const id = params.row?.id;
+      let color = 'default';
+      let textColor = '#000';
+      let bgColor = '#e0e0e0';
+  
+      switch (origen.toUpperCase()) {
+        case 'MERCADO LIBRE':
+          color = 'warning';
+          bgColor = '#f8f32b '; 
+          textColor = '#856404';
+          break;
+        default:
+          bgColor = '#f8f9fa';
+          textColor = '#6c757d';
+          break;
+      }  
+      return (
+        <Link
+          to={`/venta/${id}`}
+          style={{
+            textDecoration: 'none',
+            backgroundColor: bgColor,
+            color: textColor,
+            fontWeight: 'bold',
+            padding: '4px 8px',
+            borderRadius: '8px',
+            textAlign: 'center',
+            width: '100%',
+            display: 'inline-block'
+          }}
+          onClick={(e) => e.stopPropagation()} 
+        >
+          {noventa}
+        </Link>
+        );
+      },
   },
   {
     field: 'origen',
@@ -137,9 +280,7 @@ export const columns = [
     renderCell: (params) => {
       const isCancelada = (params.value || '').toLowerCase().includes('venta cancelada');
       const hasEmpacador = params.row?.empacador != null && params.row.empacador !== '';
-  
       const shouldMarkRed = isCancelada && hasEmpacador;
-  
       return (
         <div
           style={{
@@ -170,6 +311,7 @@ export const columns = [
     headerName: 'Empacador',
     flex: 0.5,
     minWidth: 150,
+    renderCell: (params) => <EmpacadorCell row={params.row} />
   },
   {
     field: 'estadoVenta',
@@ -333,12 +475,6 @@ export const columns = [
     headerName: 'SKU',
     flex: 1,
     minWidth: 100,
-  },
-  {
-    field: 'publicaciones_titulopublicacion',
-    headerName: 'Título de la publicación',
-    flex: 2,
-    minWidth: 200,
   },
   {
     field: 'publicaciones_variante',

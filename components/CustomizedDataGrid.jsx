@@ -129,43 +129,6 @@ export default function CustomizedDataGrid() {
     }
   };
 
-  const handleAsignarEmpacador = async () => {
-    setAssigning(true);
-    const idArray = Array.from(selectedIds?.ids ?? []);
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    };
-  
-    const queryParams = [`idempacador=${selectedEmpacador}`, ...idArray.map(id => `idmercadolibre=${id}`)].join('&');
-  
-    try {
-      const response = await clienteAxios.post(`/api/empacador/asignarEmpacador?${queryParams}`, {}, config);
-      setSnackbar({ open: true, message: 'Empacador asignado correctamente', severity: 'success' });
-
-      // 🔁 Actualiza la tabla principal sin refresh
-      await fetchData();
-      setSelectedIds([]);
-      setOpenEmpacadorModal(false);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        const errorMessage = error.response.data?.error || 'Perfil no correspondiente a Surtidor .';
-        setSnackbar({ open: true, message: errorMessage, severity: 'error' });
-      } else {
-        setSnackbar({ open: true, message: 'Error al procesar la solicitud', severity: 'error' });
-      }
-    } finally {
-      setAssigning(false);
-    }
-  };
-
-  const handleOpenEmpacadorModal = () => {
-    setOpenEmpacadorModal(true);
-  };
-
   const canntAssignSurtidor = () => {
     const idArray = Array.from(selectedIds?.ids ?? []);
     if (idArray.length === 0) {
@@ -178,20 +141,6 @@ export default function CustomizedDataGrid() {
       }
     }
     return false;
-  };
-
-  const canAssignEmpacador = () => {
-    const idArray = Array.from(selectedIds?.ids ?? []);
-    if (idArray.length === 0) {
-      return false;
-    }
-    for (const id of idArray) {
-      const row = rows.find((r) => r.id === id);
-      if (!row || !row.surtidor) {
-        return false;
-      }
-    }
-    return true;
   };
 
   return (
@@ -208,6 +157,7 @@ export default function CustomizedDataGrid() {
           pagination: { paginationModel: { pageSize: 20 } },
           columns: {
             columnVisibilityModel: {
+              origen:false,
               ventas_descripcionestado: false,
               ventas_ingresosproducto: false,
               ventas_ingresosenvio: false,
@@ -217,7 +167,6 @@ export default function CustomizedDataGrid() {
               ventas_totalmxn: false,
               publicidad_ventapublicidad: false,
               publicaciones_sku: false,
-              publicaciones_titulopublicacion: false,
               publicaciones_variante: false,
               publicaciones_tipopublicacion: false,
               facturacion_facturaadjunta: false,
@@ -260,10 +209,6 @@ export default function CustomizedDataGrid() {
         density="compact"
         loading={loading}
         isRowSelectable={(params) => !(params.row.surtidor && params.row.empacador)}
-        onRowClick={(params) => {
-          const id = params.row.id; 
-          navigate(`/venta/${id}`); // Redirige a la pantalla de detalle
-        }}
         onRowSelectionModelChange={(ids) => { 
           setSelectedIds(ids); }}
         slotProps={{
@@ -287,16 +232,6 @@ export default function CustomizedDataGrid() {
         >
           {assigning ? 'Procesando...' : 'Asignar Surtidor'}
         </Button>
-
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<GroupAddIcon />}
-          disabled={assigning || !canAssignEmpacador()}
-          onClick={handleOpenEmpacadorModal}
-        >
-          Seleccionar Empacador
-        </Button>
       </Box>
 
       <Snackbar
@@ -312,67 +247,7 @@ export default function CustomizedDataGrid() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-      <Dialog open={openEmpacadorModal} onClose={() => setOpenEmpacadorModal(false)}>
-      <DialogTitle>Selecciona Empacador</DialogTitle>
-      <DialogContent>
-        <FormControl fullWidth sx={{ mt: 1 }}>
-          <InputLabel id="empacador-label">Empacador</InputLabel>
-          <Select
-            labelId="empacador-label"
-            value={selectedEmpacador}
-            label="Empacador"
-            onChange={(e) => setSelectedEmpacador(e.target.value)}
-          >
-            {empacadores.map((emp) => (
-              <MenuItem key={emp.id_empacador} value={emp.id_empacador}>
-                {`${emp.empacador_nombre} - ${emp.empacador_correo}`}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </DialogContent>
-      <Dialog
-      open={openEmpacadorModal}
-      onClose={() => setOpenEmpacadorModal(false)}
-      fullWidth
-      maxWidth="xs"
-    >
-      <Box sx={{ width: '100%', maxWidth: 400 }}>
-        <DialogTitle>Selecciona Empacador</DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth sx={{ mt: 1 }}>
-            <InputLabel id="empacador-label">Empacador</InputLabel>
-            <Select
-              labelId="empacador-label"
-              value={selectedEmpacador}
-              label="Empacador"
-              onChange={(e) => setSelectedEmpacador(e.target.value)}
-            >
-              {empacadores.map((emp) => (
-                <MenuItem key={emp.id_empacador} value={emp.id_empacador}>
-                  {`${emp.empacador_nombre} - ${emp.empacador_correo}`}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEmpacadorModal(false)}>
-            Cerrar
-          </Button>
-          <Button
-            onClick={handleAsignarEmpacador}
-            variant="contained"
-            color="primary"
-            disabled={!selectedEmpacador || assigning}
-          >
-            {assigning ? 'Asignando...' : 'Asignar Empacador'}
-          </Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
-
-    </Dialog>
+      
     </Box>
   );
 }

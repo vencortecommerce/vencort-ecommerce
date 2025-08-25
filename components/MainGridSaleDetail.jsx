@@ -107,7 +107,7 @@ export default function MainGridSaleDetail(props) {
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                   <Box mt={2}>
                     <Button variant="contained" color="primary" onClick={() => navigate(-1)}>
-                      Volver al listado de Ventas
+                      Volver
                     </Button>
                   </Box>
                     <Typography component="h2" variant="h6">
