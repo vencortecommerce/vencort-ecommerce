@@ -1,8 +1,7 @@
 import * as React from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
-  Button, FormControl, InputLabel, Select, MenuItem, TextField, Grid, Alert, Snackbar, IconButton, 
-  Card, CardContent, CardActions, Box 
+  Button, FormControl, InputLabel, Select, MenuItem, TextField, Grid, Alert, Snackbar, IconButton
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
@@ -141,114 +140,42 @@ export default function MainGridUserRegister() {
       )
     }
   ];
-  
+
   return (
-    <>
-      <Card variant="outlined" sx={{ width: '100%' }}>
-        <CardActions sx={{ p: 2 }}>
-          <Button variant="contained" onClick={handleOpen}>
-            Registrar Usuario
-          </Button>
-        </CardActions>
-        <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-        <Box sx={{ width: '100%', overflowX: 'auto' }}>
-          <Box sx={{ minWidth: { xs: '100%', sm: 900 } }}>
-            <DataGrid
-              autoHeight
-              rows={users}
-              columns={columns}
-              loading={loading}
-              pageSizeOptions={[5, 10, 20]}
-              initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-              disableRowSelectionOnClick
-              density="compact"
-            />
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
-      
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth="sm"
-        fullWidth
-        keepMounted={false}
-        disableScrollLock
-        transitionDuration={0}
-      >
+    <div style={{ padding: 20 }}>
+      <Button variant="contained" onClick={handleOpen} sx={{ mb: 2 }}>
+        Registrar Usuario
+      </Button>
+
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <form onSubmit={handleSubmit}>
           <DialogTitle>{editingUser ? 'Editar Usuario' : 'Registrar nuevo usuario'}</DialogTitle>
-  
           <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <DialogContentText>
               {editingUser ? 'Edita los datos del usuario.' : 'Llena los datos del nuevo usuario a registrar.'}
             </DialogContentText>
-  
             {error && <Alert severity="error">{error}</Alert>}
-  
+
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  required
-                  label="Nombre"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  fullWidth
-                />
+              <Grid item xs={12} sm={6}>
+                <TextField required label="Nombre" name="name" value={formData.name} onChange={handleChange} fullWidth />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  required
-                  label="Apellido"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  fullWidth
-                />
+              <Grid item xs={12} sm={6}>
+                <TextField required label="Apellido" name="lastName" value={formData.lastName} onChange={handleChange} fullWidth />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  required
-                  label="Usuario"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  fullWidth
-                  disabled={editingUser}
-                />
+              <Grid item xs={12} sm={6}>
+                <TextField required label="Usuario" name="username" value={formData.username} onChange={handleChange} fullWidth disabled={editingUser} />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  required
-                  type="email"
-                  label="Correo"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  fullWidth
-                />
+              <Grid item xs={12} sm={6}>
+                <TextField required type="email" label="Correo" name="email" value={formData.email} onChange={handleChange} fullWidth />
               </Grid>
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  label="Descripción"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  fullWidth
-                />
+              <Grid item xs={12}>
+                <TextField label="Descripción" name="description" value={formData.description} onChange={handleChange} fullWidth />
               </Grid>
-              <Grid size={{ xs: 12 }}>
+              <Grid item xs={12}>
                 <FormControl fullWidth required>
                   <InputLabel id="role-label">Rol</InputLabel>
-                  <Select
-                    labelId="role-label"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                    label="Rol"
-                  >
+                  <Select labelId="role-label" name="role" value={formData.role} onChange={handleChange} label="Rol">
                     <MenuItem value="ROLE_ADMIN">ADMIN</MenuItem>
                     <MenuItem value="ROLE_USER">USUARIO</MenuItem>
                     <MenuItem value="ROLE_SURTIDOR">SURTIDOR</MenuItem>
@@ -257,7 +184,6 @@ export default function MainGridUserRegister() {
               </Grid>
             </Grid>
           </DialogContent>
-  
           <DialogActions sx={{ pb: 2, px: 3 }}>
             <Button onClick={handleClose} disabled={loading}>Cancelar</Button>
             <Button variant="contained" color="success" type="submit" disabled={loading}>
@@ -266,7 +192,7 @@ export default function MainGridUserRegister() {
           </DialogActions>
         </form>
       </Dialog>
-  
+
       <Snackbar
         open={!!successMessage}
         autoHideDuration={3000}
@@ -277,6 +203,20 @@ export default function MainGridUserRegister() {
           {successMessage}
         </Alert>
       </Snackbar>
-    </>
-  );  
+
+      <div style={{ marginTop: 30, height: 400, width: '100%', overflowX: 'auto' }}>
+        <div style={{ minWidth: 900 }}>
+          <DataGrid
+            rows={users}
+            columns={columns}
+            loading={loading}
+            pageSizeOptions={[5, 10, 20]}
+            initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+            disableRowSelectionOnClick
+            density="compact"
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
