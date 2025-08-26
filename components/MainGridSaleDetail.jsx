@@ -32,7 +32,8 @@ export default function MainGridSaleDetail(props) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
   const [zoomedImage, setZoomedImage] = React.useState(null);
-
+  const [selectedPage, setSelectedPage] = React.useState('Inicio'); 
+  
   React.useEffect(() => {
     const fetchDetalle = async () => {
       try {
@@ -82,8 +83,8 @@ export default function MainGridSaleDetail(props) {
     <AppTheme {...props} themeComponents={xThemeComponents}>
       <CssBaseline enableColorScheme />
       <Box sx={{ display: 'flex' }}>
-        <SideMenu selectedPage={''} setSelectedPage={() => {}} />
-        <AppNavbar />
+        <SideMenu selectedPage={selectedPage} setSelectedPage={setSelectedPage} />
+        <AppNavbar selectedPage={selectedPage} setSelectedPage={setSelectedPage}/>
         <Box
           component="main"
           sx={(theme) => ({
