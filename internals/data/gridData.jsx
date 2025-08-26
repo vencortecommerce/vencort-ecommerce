@@ -46,8 +46,8 @@ export const EmpacadorCell = ({ row }) => {
         <div>{row.empacador}</div>
       ) : (
         <Button
-          variant="contained"
-          color="success"
+          variant="outlined"
+          color="info"
           size="small"
           onClick={() => setOpen(true)}
         >
@@ -381,7 +381,7 @@ export const columns = [
       const fileName = `etiqueta_${params.row?.ventas_noventa ?? 'documento'}.pdf`;
 
       const onClick = (e) => {
-        e.stopPropagation(); // evita seleccionar la fila
+        e.stopPropagation(); 
         downloadEtiqueta(v, fileName);
       };
 

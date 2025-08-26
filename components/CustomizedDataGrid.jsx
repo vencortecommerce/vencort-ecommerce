@@ -170,7 +170,7 @@ export default function CustomizedDataGrid() {
   };
 
   return (
-    <Box >
+    <Box ><br/>
     <FormControl sx={{ minWidth: 180 }} size="small">
       <InputLabel>Columna</InputLabel>
       <Select
@@ -179,7 +179,6 @@ export default function CustomizedDataGrid() {
         onChange={(e) => {
           const nuevaColumna = e.target.value;
           setFilterColumn(nuevaColumna);
-          // Reset operator cuando cambia columna
           const operadores = getAvailableOperators(nuevaColumna);
           setFilterOperator(operadores[0]);
         }}
@@ -213,10 +212,10 @@ export default function CustomizedDataGrid() {
       value={filterValue}
       onChange={(e) => setFilterValue(e.target.value)}
     />
-  
+ 
       <Button
-      variant="contained"
-      color="primary"
+      variant="outlined"
+      color="secondary"
       onClick={handleApplyFilter}
       disabled={!filterValue}
     >
@@ -225,7 +224,7 @@ export default function CustomizedDataGrid() {
 
     <Button
       variant="outlined"
-      color="secondary"
+      color="success"
       onClick={() => {
         setFilterValue('');
         setFilterColumn('ventas_noventa');
@@ -235,7 +234,7 @@ export default function CustomizedDataGrid() {
     >
       Limpiar Filtro
     </Button>
-      
+      <br/><br/>
       <DataGrid
         checkboxSelection
         rows={rows}
