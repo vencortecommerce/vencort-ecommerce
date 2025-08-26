@@ -83,28 +83,9 @@ export default function CustomizedDataGrid() {
     }
   };
 
-  const fetchEmpacadores = async () => {
-    try {
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      };
-      const response = await clienteAxios.get('/api/empacador/consulta', config);
-      const activos = response.data.filter(emp => emp.empacador_activo);
-      setEmpacadores(activos);
-    } catch (error) {
-      console.error(':', error);
-      setSnackbar({ open: true, message: 'No se encontró información de Empacadores', severity: 'error' });
-    }
-  };
-
   React.useEffect(() => {
     mountedRef.current = true;
     fetchData();  
-    fetchEmpacadores();
 
     const intervalId = setInterval(() => {
       if (!document.hidden) {
