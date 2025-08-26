@@ -6,7 +6,8 @@ import clienteAxios from '../src/context/Config';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Select, MenuItem, InputLabel, FormControl
+  Select, MenuItem, InputLabel, FormControl,
+  TextField
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,10 +17,35 @@ export default function CustomizedDataGrid() {
   const [selectedIds, setSelectedIds] = React.useState([]);
   const [assigning, setAssigning] = React.useState(false);
   const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success', });
-  const [openEmpacadorModal, setOpenEmpacadorModal] = React.useState(false);
-  const [empacadores, setEmpacadores] = React.useState([]);
-  const [selectedEmpacador, setSelectedEmpacador] = React.useState('');
+
   const navigate = useNavigate();
+  const [filterColumn, setFilterColumn] = React.useState('ventas_noventa');
+  const [filterOperator, setFilterOperator] = React.useState('contains');
+  const [filterValue, setFilterValue] = React.useState('');
+  const [filterModel, setFilterModel] = React.useState({ items: [] });
+  // ====== FILTRO======
+  const handleApplyFilter = () => {
+    setFilterModel({
+      items: [
+        {
+          id: 1,
+          field: filterColumn,
+          operator: filterOperator,
+          value: filterValue,
+        },
+      ],
+    });
+  };
+
+  const getAvailableOperators = (field) => {
+    const col = columns.find((c) => c.field === field);
+    if (col?.type === 'number') {
+      return ['=', '!=', '>', '>=', '<', '<='];
+    }
+    return ['contains', 'equals', 'startsWith', 'endsWith'];
+  };
+
+  const operatorOptions = getAvailableOperators(filterColumn);
 
   // ====== Auto-refresh======
   const REFRESH_MS = 600000; // 5min
@@ -144,7 +170,72 @@ export default function CustomizedDataGrid() {
   };
 
   return (
-    <Box>
+    <Box >
+    <FormControl sx={{ minWidth: 180 }} size="small">
+      <InputLabel>Columna</InputLabel>
+      <Select
+        value={filterColumn}
+        label="Columna"
+        onChange={(e) => {
+          const nuevaColumna = e.target.value;
+          setFilterColumn(nuevaColumna);
+          // Reset operator cuando cambia columna
+          const operadores = getAvailableOperators(nuevaColumna);
+          setFilterOperator(operadores[0]);
+        }}
+      >
+        {columns.map((col) => (
+          <MenuItem key={col.field} value={col.field}>
+            {col.headerName}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  
+    <FormControl sx={{ minWidth: 160 }} size="small">
+      <InputLabel>Operador</InputLabel>
+      <Select
+        value={filterOperator}
+        label="Operador"
+        onChange={(e) => setFilterOperator(e.target.value)}
+      >
+        {getAvailableOperators(filterColumn).map((op) => (
+          <MenuItem key={op} value={op}>
+            {op}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  
+    <TextField
+      size="small"
+      label="Valor"
+      value={filterValue}
+      onChange={(e) => setFilterValue(e.target.value)}
+    />
+  
+      <Button
+      variant="contained"
+      color="primary"
+      onClick={handleApplyFilter}
+      disabled={!filterValue}
+    >
+      Aplicar Filtro
+    </Button>
+
+    <Button
+      variant="outlined"
+      color="secondary"
+      onClick={() => {
+        setFilterValue('');
+        setFilterColumn('ventas_noventa');
+        setFilterOperator('contains');
+        setFilterModel({ items: [] });
+      }}
+    >
+      Limpiar Filtro
+    </Button>
+      
       <DataGrid
         checkboxSelection
         rows={rows}
@@ -208,6 +299,7 @@ export default function CustomizedDataGrid() {
         disableColumnResize
         density="compact"
         loading={loading}
+        filterModel={filterModel}
         isRowSelectable={(params) => !(params.row.surtidor && params.row.empacador)}
         onRowSelectionModelChange={(ids) => { 
           setSelectedIds(ids); }}
