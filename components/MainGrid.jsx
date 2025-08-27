@@ -16,7 +16,7 @@ export default function MainGrid() {
       }}
     >
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        Detalle
+        Ventas
       </Typography>
 
       <Grid container spacing={2} sx={{ flexGrow: 1, minHeight: 0 }}>
