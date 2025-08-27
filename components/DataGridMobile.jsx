@@ -204,6 +204,36 @@ export default function DataGridMobile() {
     }
   };  
 
+  function downloadEtiqueta(value, fileName = 'etiqueta.pdf') {
+    let blob;
+  
+    if (Array.isArray(value)) {
+      const uint8 = new Uint8Array(value);
+      blob = new Blob([uint8], { type: 'application/pdf' });
+    } else if (typeof value === 'string') {
+      let base64 = value;
+      const match = base64.match(/^data:.*;base64,(.*)$/);
+      if (match) base64 = match[1];
+      const binary = atob(base64);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+      blob = new Blob([bytes], { type: 'application/pdf' });
+    } else {
+      console.warn('Formato de etiqueta no soportado:', typeof value);
+      return;
+    }
+  
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
   React.useEffect(() => {
     mountedRef.current = true;
     if (!hasFetchedRef.current) {
@@ -566,6 +596,40 @@ export default function DataGridMobile() {
                     </Box>
                     );
                 }
+                if (col.field === 'etiqueta') {
+                    const rawEtiqueta = row[col.field];
+                    const hasEtiqueta =
+                      (typeof rawEtiqueta === 'string' && rawEtiqueta.trim() !== '') ||
+                      Array.isArray(rawEtiqueta);
+                  
+                    const fileName = `etiqueta_${row.ventas_noventa ?? 'documento'}.pdf`;
+                  
+                    return (
+                      <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}>
+                          {col.headerName ?? col.field}:
+                        </Typography>
+                  
+                        {hasEtiqueta ? (
+                          <Button
+                            variant="outlined"
+                            color="secondary"
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadEtiqueta(rawEtiqueta, fileName);
+                            }}
+                          >
+                            Descargar
+                          </Button>
+                        ) : (
+                          <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
+                            —
+                          </Typography>
+                        )}
+                      </Box>
+                    );
+                  }
                 return (
                     <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                       <Typography
