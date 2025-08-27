@@ -41,7 +41,7 @@ function SideMenuMobile({ open, toggleDrawer, selectedPage, setSelectedPage }) {
     try {
       await logout();
       toggleDrawer(false);
-      navigate('/login');
+      navigate('/');
     } finally {
       setIsLoggingOut(false);
     }

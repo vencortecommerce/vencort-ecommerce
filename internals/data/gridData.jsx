@@ -18,7 +18,7 @@ export const EmpacadorCell = ({ row }) => {
   const [assigning, setAssigning] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
 
-  const handleAsignar = async () => {
+  const handleAsignarEmpacador = async () => {
     setAssigning(true);
     try {
       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
@@ -77,7 +77,7 @@ export const EmpacadorCell = ({ row }) => {
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cerrar</Button>
           <Button
-            onClick={handleAsignar}
+            onClick={handleAsignarEmpacador}
             disabled={!selected || assigning}
             variant="contained"
             color="primary"

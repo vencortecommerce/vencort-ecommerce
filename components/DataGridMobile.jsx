@@ -171,7 +171,7 @@ export default function DataGridMobile() {
     setTargetVentaId(null);
   };
 
-  const handleAsignar = async () => {
+  const handleAsignarEmpacador = async () => {
     if (!selectedEmp || !targetVentaId) {
       setSnackbar({ open: true, message: 'Selecciona un empacador válido', severity: 'warning' });
       return;
@@ -192,9 +192,19 @@ export default function DataGridMobile() {
       ].join('&');
   
       await clienteAxios.post(`/api/empacador/asignarEmpacador?${queryParams}`, {}, config);
-  
+      const selectedName =
+      empacadores.find(e => e.id_empacador === parseInt(selectedEmp, 10))?.empacador_nombre
+      ?? 'Asignado';
+
+      setRows(prev =>
+          prev.map(r =>
+          r.id === targetVentaId
+              ? { ...r, empacador: selectedName }
+              : r
+          )
+      );
+
       setSnackbar({ open: true, message: 'Empacador asignado correctamente', severity: 'success' });
-      await fetchData();
     } catch (e) {
       console.error('Error al asignar empacador', e);
       setSnackbar({ open: true, message: 'Error al asignar empacador', severity: 'error' });
@@ -315,8 +325,18 @@ export default function DataGridMobile() {
   }, [columns, columnVisibilityModel]);
 
   const displayedRows = applyFilterToRows(rows);
-  
-  // Asignar Surtidor
+
+  const getSessionUserName = () => {
+    const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (!raw) return null;
+    try {
+      const obj = JSON.parse(raw);
+      return obj.name || obj.nombre || obj.username || obj.user || obj.email || raw;
+    } catch {
+      return raw;
+    }
+  };
+
   const handleAsignarSurtidor = async (id) => {
     if (!id) {
       setSnackbar({ open: true, message: 'Id de venta inválido', severity: 'warning' });
@@ -333,9 +353,13 @@ export default function DataGridMobile() {
       };
       const queryParams = `idmercadolibre=${encodeURIComponent(id)}`;
       await clienteAxios.post(`/api/ventas/asignarSurtidor?${queryParams}`, {}, config);
+
+      const sessionName = getSessionUserName() ?? 'Asignado';
+      setRows((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, surtidor: sessionName } : r))
+      );
   
       setSnackbar({ open: true, message: 'Surtidor asignado correctamente', severity: 'success' });
-      await fetchData();
     } catch (error) {
       if (error?.response?.status === 401) {
         const msg = error.response?.data?.error || 'Perfil no correspondiente a Surtidor.';
@@ -693,7 +717,7 @@ export default function DataGridMobile() {
         <DialogActions>
             <Button onClick={closeEmpacadorModal}>Cerrar</Button>
             <Button
-            onClick={handleAsignar}
+            onClick={handleAsignarEmpacador}
             disabled={!selectedEmp || assigning}
             variant="contained"
             color="primary"
