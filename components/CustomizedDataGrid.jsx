@@ -48,10 +48,11 @@ export default function CustomizedDataGrid() {
   const operatorOptions = getAvailableOperators(filterColumn);
 
   // ====== Auto-refresh======
-  const REFRESH_MS = 600000; // 5min
+  const REFRESH_MS = 600000; // 10min
   const mountedRef = React.useRef(true);
   const isFetchingRef = React.useRef(false);
-
+  const hasFetchedRef = React.useRef(false); 
+  
   const fetchData = async () => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
@@ -65,6 +66,7 @@ export default function CustomizedDataGrid() {
     };
 
     try {
+
       const response = await clienteAxios.get('/api/ventas/consulta', config);
       const dataWithId = response.data.map((item) => ({
         id: item.idmercadolibre,
@@ -85,7 +87,10 @@ export default function CustomizedDataGrid() {
 
   React.useEffect(() => {
     mountedRef.current = true;
-    fetchData();  
+    if (!hasFetchedRef.current) {
+        fetchData();
+        hasFetchedRef.current = true;
+    }
 
     const intervalId = setInterval(() => {
       if (!document.hidden) {
@@ -93,17 +98,9 @@ export default function CustomizedDataGrid() {
       }
     }, REFRESH_MS);
 
-    const onVisibility = () => { if (!document.hidden) fetchData(); };
-    const onFocus = () => fetchData();
-
-    document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('focus', onFocus);
-
     return () => {
       mountedRef.current = false;
       clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('focus', onFocus);
     };
   }, []);  
 
