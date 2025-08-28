@@ -2,7 +2,6 @@ import * as React from 'react';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import CustomizedDataGrid from './CustomizedDataGrid';
 import SaleActions from './SaleActions';
 import DataGridWeb from './DataGridWeb';
 import DataGridMobile from './DataGridMobile';
