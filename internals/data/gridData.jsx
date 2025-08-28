@@ -176,25 +176,26 @@ export function renderAvatar(params) {
     </Avatar>
   );
 }
-
-// === Helper para descargar PDF desde base64 o byte[] ===
-function downloadEtiqueta(value, fileName = 'etiqueta.pdf') {
+function downloadEtiqueta(value, fileName = 'Etiqueta.pdf', mime = 'application/pdf') {
   let blob;
 
-  if (Array.isArray(value)) {
-    const uint8 = new Uint8Array(value);
-    blob = new Blob([uint8], { type: 'application/pdf' });
+  if (value instanceof Blob) {
+    blob = value.type ? value : new Blob([value], { type: mime });
+  } else if (value instanceof ArrayBuffer) {
+    blob = new Blob([new Uint8Array(value)], { type: mime });
+  } else if (ArrayBuffer.isView(value)) { 
+    blob = new Blob([value], { type: mime });
+  } else if (Array.isArray(value)) {
+    blob = new Blob([new Uint8Array(value)], { type: mime });
   } else if (typeof value === 'string') {
     let base64 = value;
-    const match = base64.match(/^data:.*;base64,(.*)$/);
-    if (match) base64 = match[1];
-    const binary = atob(base64);
-    const len = binary.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
-    blob = new Blob([bytes], { type: 'application/pdf' });
+    const m = base64.match(/^data:([^;]+);base64,(.*)$/);
+    const b64 = m ? m[2] : base64;
+    const binary = atob(b64);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    blob = new Blob([bytes], { type: mime });
   } else {
-    console.warn('Formato de etiqueta no soportado:', typeof value);
+    console.warn('Formato de etiqueta no soportado:', typeof value, value);
     return;
   }
 
@@ -371,20 +372,34 @@ export const columns = [
     sortable: false,
     filterable: false,
     renderCell: (params) => {
-      const v = params.value;
-      const hasBytes =
-        (typeof v === 'string' && v.trim() !== '') ||
-        (Array.isArray(v) && v.length > 0);
-
-      if (!hasBytes) return '';
-
+      const hasEtiqueta = Boolean(params.value);
+      if (!hasEtiqueta) return '';
+  
       const fileName = `etiqueta_${params.row?.ventas_noventa ?? 'documento'}.pdf`;
-
-      const onClick = (e) => {
-        e.stopPropagation(); 
-        downloadEtiqueta(v, fileName);
+  
+      const onClick = async (e) => {
+        e.stopPropagation();
+        try {
+          const noVenta = params.row?.ventas_noventa;
+          if (!noVenta) return;
+  
+          const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+  
+          const res = await clienteAxios.get('/api/archivos/etiqueta', {
+            params: { noVenta }, 
+            responseType: 'blob',
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              Accept: 'application/pdf',
+            },
+          });
+  
+          downloadEtiqueta(res.data, fileName);
+        } catch (err) {
+          console.error('Error descargando etiqueta:', err);
+        }
       };
-
+  
       return (
         <Button variant="outlined" size="small" onClick={onClick}>
           Descargar

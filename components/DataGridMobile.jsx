@@ -213,24 +213,26 @@ export default function DataGridMobile() {
       closeEmpacadorModal();
     }
   };  
-
-  function downloadEtiqueta(value, fileName = 'etiqueta.pdf') {
+  function downloadEtiqueta(value, fileName = 'Etiqueta.pdf', mime = 'application/pdf') {
     let blob;
   
-    if (Array.isArray(value)) {
-      const uint8 = new Uint8Array(value);
-      blob = new Blob([uint8], { type: 'application/pdf' });
+    if (value instanceof Blob) {
+      blob = value.type ? value : new Blob([value], { type: mime });
+    } else if (value instanceof ArrayBuffer) {
+      blob = new Blob([new Uint8Array(value)], { type: mime });
+    } else if (ArrayBuffer.isView(value)) { 
+      blob = new Blob([value], { type: mime });
+    } else if (Array.isArray(value)) {
+      blob = new Blob([new Uint8Array(value)], { type: mime });
     } else if (typeof value === 'string') {
       let base64 = value;
-      const match = base64.match(/^data:.*;base64,(.*)$/);
-      if (match) base64 = match[1];
-      const binary = atob(base64);
-      const len = binary.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
-      blob = new Blob([bytes], { type: 'application/pdf' });
+      const m = base64.match(/^data:([^;]+);base64,(.*)$/);
+      const b64 = m ? m[2] : base64;
+      const binary = atob(b64);
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      blob = new Blob([bytes], { type: mime });
     } else {
-      console.warn('Formato de etiqueta no soportado:', typeof value);
+      console.warn('Formato de etiqueta no soportado:', typeof value, value);
       return;
     }
   
@@ -621,39 +623,58 @@ export default function DataGridMobile() {
                     );
                 }
                 if (col.field === 'etiqueta') {
-                    const rawEtiqueta = row[col.field];
-                    const hasEtiqueta =
-                      (typeof rawEtiqueta === 'string' && rawEtiqueta.trim() !== '') ||
-                      Array.isArray(rawEtiqueta);
-                  
-                    const fileName = `etiqueta_${row.ventas_noventa ?? 'documento'}.pdf`;
-                  
-                    return (
-                      <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}>
-                          {col.headerName ?? col.field}:
+                  const hasEtiqueta = Boolean(row[col.field]); // ahora es booleano
+                  const label = col.headerName ?? col.field;
+                  const fileName = `etiqueta_${row.ventas_noventa ?? 'documento'}.pdf`;
+                
+                  return (
+                    <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}>
+                        {label}:
+                      </Typography>
+                
+                      {hasEtiqueta ? (
+                        <Button
+                          variant="outlined"
+                          color="secondary"
+                          size="small"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              const noVenta = row?.ventas_noventa;
+                              if (!noVenta) {
+                                setSnackbar({ open: true, message: 'No. de venta inválido', severity: 'warning' });
+                                return;
+                              }                
+                              const token =
+                                localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+                
+                              const res = await clienteAxios.get('/api/archivos/etiqueta', {
+                                params: { noVenta },
+                                responseType: 'blob',
+                                headers: {
+                                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                                  Accept: 'application/pdf',
+                                },
+                              });
+                              downloadEtiqueta(res.data, fileName);
+                            } catch (err) {
+                              console.error('Error descargando etiqueta:', err);
+                              setSnackbar({ open: true, message: 'No se pudo descargar la etiqueta', severity: 'error' });
+                            }
+                          }}
+                        >
+                          Descargar
+                        </Button>
+                      ) : (
+                        <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
+                          —
                         </Typography>
-                  
-                        {hasEtiqueta ? (
-                          <Button
-                            variant="outlined"
-                            color="secondary"
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              downloadEtiqueta(rawEtiqueta, fileName);
-                            }}
-                          >
-                            Descargar
-                          </Button>
-                        ) : (
-                          <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
-                            —
-                          </Typography>
-                        )}
-                      </Box>
-                    );
-                  }
+                      )}
+                    </Box>
+                  );
+                }
+                
                 return (
                     <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                       <Typography
