@@ -1,12 +1,16 @@
 import * as React from 'react';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import CustomizedDataGrid from './CustomizedDataGrid';
 import SaleActions from './SaleActions';
+import DataGridWeb from './DataGridWeb';
+import DataGridMobile from './DataGridMobile';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 export default function MainGrid() {
+  const isMobile = useMediaQuery('(max-width:600px)');
+
   return (
     <Box
       sx={{
@@ -22,7 +26,7 @@ export default function MainGrid() {
       <Grid container spacing={2} sx={{ flexGrow: 1, minHeight: 0 }}>
         <Grid item xs={12} lg={9} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <Box sx={{ mb: 2 }}>
-            <SaleActions />
+            {!isMobile && <SaleActions />}
           </Box>
 
           <Box
@@ -32,7 +36,10 @@ export default function MainGrid() {
               overflow: 'auto',
             }}
           >
-            <CustomizedDataGrid />
+            <>
+              {!isMobile && <DataGridWeb />}
+              {isMobile && <DataGridMobile />}
+            </>
           </Box>
         </Grid>
       </Grid>
