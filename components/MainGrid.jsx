@@ -18,9 +18,6 @@ export default function MainGrid() {
         maxWidth: { xs: '100%', md: '1700px' }
       }}
     >
-      <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        Ventas
-      </Typography>
 
       <Grid container spacing={2} sx={{ flexGrow: 1, minHeight: 0 }}>
         <Grid item xs={12} lg={9} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
