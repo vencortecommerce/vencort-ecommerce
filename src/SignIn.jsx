@@ -63,22 +63,21 @@ export default function SignIn() {
     }
   
     try {
-      // Aquí usamos clienteAxios en lugar de fetch
       const response = await clienteAxios.post('/api/usuarios/autenticacion', { username, password });
 
       const result = response.data;
 
-      const { token, username: usernameResult, email } = result;
+      const { token, username: usernameResult, email, name, lastname } = result;
 
       if (!setUser) {
         console.error('setUser no está definido');
       } else {
-        setUser({ username: usernameResult, email, token });
+        setUser({ username: usernameResult, email, token, name, lastname  });
       }
 
       localStorage.removeItem('token');
       localStorage.setItem('authToken', token);
-      
+      console.info("Resultado ",JSON.stringify(result));
       localStorage.setItem('user', JSON.stringify(result));
       setSnackbarMessage('Sesión iniciada correctamente');
       setSnackbarSeverity('success');

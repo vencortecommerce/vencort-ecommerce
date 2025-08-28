@@ -105,6 +105,7 @@ export default function DataGridWeb() {
           const idArray = Array.from(selectedIds?.ids ?? []);
           const queryParams = idArray.map((id) => `idmercadolibre=${id}`).join('&');
           const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+          const usuario = localStorage.getItem('user') || sessionStorage.getItem('user');
           const config = {
             headers: {
               'Content-Type': 'application/json',
@@ -114,7 +115,17 @@ export default function DataGridWeb() {
           const response = await clienteAxios.post(`/api/ventas/asignarSurtidor?${queryParams}`, {}, config);
           setSnackbar({ open: true, message: 'Procesado correctamente', severity: 'success' });
     
-          await fetchData();
+          const sessionName = usuario ?? 'Asignado';
+          const fullName =
+          [ (typeof sessionName === 'string' ? JSON.parse(sessionName) : sessionName)?.name,
+            (typeof sessionName === 'string' ? JSON.parse(sessionName) : sessionName)?.lastname
+          ].filter(Boolean).join(' ');
+
+          setRows((prev) =>
+            prev.map((r) => (idArray.includes(r.id) ? { ...r, surtidor: fullName } : r))
+          );
+
+          setSnackbar({ open: true, message: 'Procesado correctamente', severity: 'success' });
           setSelectedIds([]);
         } catch (error) {
           if (error.response?.status === 401) {

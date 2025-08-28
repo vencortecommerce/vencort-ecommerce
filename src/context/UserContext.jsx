@@ -4,7 +4,6 @@ const UserContext = createContext();
 
 export function UserProvider({ children }) {
     const [user, setUser] = useState(() => {
-        // Al cargar, busca en localStorage
         let initialUser = null;
         try {
           const storedUser = localStorage.getItem('user');
@@ -16,9 +15,8 @@ export function UserProvider({ children }) {
           localStorage.removeItem('user');
         }
       
-        return initialUser; // ← ESTA LÍNEA FALTABA
+        return initialUser; 
     });
-      
 
   // Siempre que el usuario cambie, actualiza el localStorage
   useEffect(() => {
