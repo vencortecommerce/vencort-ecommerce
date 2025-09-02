@@ -8,7 +8,7 @@ import { Box, Button, Snackbar, Alert,
 import { columns } from '../internals/data/gridData';
 import clienteAxios from '../src/context/Config';
 import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+//import { Link } from 'react-router-dom';
 
 export default function DataGridMobile() {
   const navigate = useNavigate();
@@ -51,7 +51,6 @@ export default function DataGridMobile() {
     ventas_anulacionesreembolsos: false,
     ventas_totalmxn: false,
     publicidad_ventapublicidad: false,
-    publicaciones_sku: false,
     publicaciones_variante: false,
     publicaciones_tipopublicacion: false,
     facturacion_facturaadjunta: false,
@@ -87,6 +86,20 @@ export default function DataGridMobile() {
     reclamos_reclamocerrado: false,
     reclamos_conmediacion: false,
   }), []);
+
+  // Filas con “detalle expandido”
+  const [expandedRows, setExpandedRows] = React.useState(() => new Set());
+  const toggleRowDetails = (id) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const allNonHiddenColumns = React.useMemo(() => {
+    return columns.filter(col => col.hide !== true);
+  }, [columns]);
 
   const getAvailableOperators = (field) => {
     const col = columns.find((c) => c.field === field);
@@ -502,7 +515,9 @@ export default function DataGridMobile() {
         const selected = selectedIds.includes(row.id);
         const disabled = !isRowSelectable(row);
         const isActive = row.id === activeId;
-
+        const isExpanded = expandedRows.has(row.id);
+        const colsToRender = isExpanded ? allNonHiddenColumns : visibleColumns;
+        
         return (
           <Card
             key={row.id ?? idx}
@@ -524,11 +539,21 @@ export default function DataGridMobile() {
             {(() => {
                 const isML = String(row.origen || '').toUpperCase() === 'MERCADO LIBRE';
                 return (
-                <Typography
-                    variant="h6"
-                    component={Link}
-                    to={`/venta/${row.id}`}
-                    sx={{
+                  <Typography
+                  variant="h6"
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleRowDetails(row.id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleRowDetails(row.id);
+                    }
+                  }}
+                  sx={{
                     flex: 1,
                     minWidth: 0,
                     display: 'inline-block',
@@ -536,16 +561,18 @@ export default function DataGridMobile() {
                     px: 1,
                     py: 0.5,
                     borderRadius: 1,
-                    bgcolor: isML ? '#f8f32b' : 'transparent',
-                    color: isML ? '#856404' : 'inherit',
+                    bgcolor: String(row.origen || '').toUpperCase() === 'MERCADO LIBRE' ? '#f8f32b' : 'transparent',
+                    color: String(row.origen || '').toUpperCase() === 'MERCADO LIBRE' ? '#856404' : 'inherit',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                     fontWeight: 700,
-                    }}
-                    aria-label={`Ver detalle de venta ${row.ventas_noventa ?? row.id}`}
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                  aria-label={`Alternar detalle de venta ${row.ventas_noventa ?? row.id}`}
                 >
-                    {row.ventas_noventa ?? row.id ?? `#${idx + 1}`}
+                  {row.ventas_noventa ?? row.id ?? `#${idx + 1}`}
                 </Typography>
                 );
             })()}
@@ -556,7 +583,7 @@ export default function DataGridMobile() {
               <Chip label={row.ventas_estado ?? '—'} size="small" /><br/><br/>
 
               <Stack spacing={0.5}>
-                {visibleColumns.map((col) => {
+                {colsToRender.map((col) => {
                   const label = col.headerName ?? col.field;
                   let value = row[col.field];
                   if (col.valueGetter) {
