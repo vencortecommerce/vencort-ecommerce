@@ -8,7 +8,7 @@ import { Box, Button, Snackbar, Alert,
 import { columns } from '../internals/data/gridData';
 import clienteAxios from '../src/context/Config';
 import { useNavigate } from 'react-router-dom';
-//import { Link } from 'react-router-dom';
+import { ButtonBase } from '@mui/material';
 
 export default function DataGridMobile() {
   const navigate = useNavigate();
@@ -89,17 +89,18 @@ export default function DataGridMobile() {
 
   // Filas con “detalle expandido”
   const [expandedRows, setExpandedRows] = React.useState(() => new Set());
-  const toggleRowDetails = (id) => {
+  const toggleRowDetails = React.useCallback((id) => {
     setExpandedRows(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
-  };
+  }, []);
 
-  const allNonHiddenColumns = React.useMemo(() => {
-    return columns.filter(col => col.hide !== true);
-  }, [columns]);
+  const allNonHiddenColumns = React.useMemo(
+    () => columns.filter(col => col.hide !== true),
+    []
+  );
 
   const getAvailableOperators = (field) => {
     const col = columns.find((c) => c.field === field);
@@ -337,7 +338,7 @@ export default function DataGridMobile() {
       const hiddenByCol = col.hide === true;
       return !(hiddenByModel || hiddenByCol);
     });
-  }, [columns, columnVisibilityModel]);
+  }, [columnVisibilityModel]);
 
   const displayedRows = applyFilterToRows(rows);
 
@@ -512,20 +513,19 @@ export default function DataGridMobile() {
     </Box>
     ) : (
       displayedRows.map((row, idx) => {
-        const selected = selectedIds.includes(row.id);
-        const disabled = !isRowSelectable(row);
-        const isActive = row.id === activeId;
+        const isActive   = row.id === activeId;
         const isExpanded = expandedRows.has(row.id);
         const colsToRender = isExpanded ? allNonHiddenColumns : visibleColumns;
-        
+        const isML = String(row.origen || '').toUpperCase() === 'MERCADO LIBRE';
+
         return (
           <Card
             key={row.id ?? idx}
             variant="outlined"
             onClick={() => setActiveId(row.id)}
             sx={{
-              flex: '0 0 100%',       
-              width: '100vw',        
+              flex: '0 0 100%',
+              width: '100vw',
               maxWidth: '100vw',
               scrollSnapAlign: 'start',
               borderRadius: 0,
@@ -535,174 +535,173 @@ export default function DataGridMobile() {
             }}
           >
             <CardContent sx={{ p: 2, boxSizing: 'border-box' }}>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-            {(() => {
-                const isML = String(row.origen || '').toUpperCase() === 'MERCADO LIBRE';
-                return (
-                  <Typography
-                  variant="h6"
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleRowDetails(row.id);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      toggleRowDetails(row.id);
-                    }
-                  }}
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                <ButtonBase
+                  onClick={(e) => { e.stopPropagation(); toggleRowDetails(row.id); }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
                   sx={{
                     flex: 1,
                     minWidth: 0,
-                    display: 'inline-block',
-                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
                     px: 1,
                     py: 0.5,
                     borderRadius: 1,
-                    bgcolor: String(row.origen || '').toUpperCase() === 'MERCADO LIBRE' ? '#f8f32b' : 'transparent',
-                    color: String(row.origen || '').toUpperCase() === 'MERCADO LIBRE' ? '#856404' : 'inherit',
+                    bgcolor: isML ? '#f8f32b' : 'transparent',
+                    color: isML ? '#856404' : 'inherit',
                     overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    fontWeight: 700,
+                    touchAction: 'manipulation',
+                    WebkitTapHighlightColor: 'transparent',
                     cursor: 'pointer',
                     userSelect: 'none',
                   }}
                   aria-label={`Alternar detalle de venta ${row.ventas_noventa ?? row.id}`}
                 >
-                  {row.ventas_noventa ?? row.id ?? `#${idx + 1}`}
-                </Typography>
-                );
-            })()}
-
-            
-            </Stack>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {row.ventas_noventa ?? row.id ?? `#${idx + 1}`}
+                  </Typography>
+                </ButtonBase>
+              </Stack>
+        
               <Divider sx={{ mb: 1 }} />
               <Chip label={row.ventas_estado ?? '—'} size="small" /><br/><br/>
-
+        
               <Stack spacing={0.5}>
                 {colsToRender.map((col) => {
                   const label = col.headerName ?? col.field;
                   let value = row[col.field];
+        
                   if (col.valueGetter) {
                     try { value = col.valueGetter({ row, value, field: col.field }); } catch {}
                   }
                   if (col.valueFormatter) {
                     try { value = col.valueFormatter({ value, field: col.field, id: row.id, api: null }); } catch {}
                   }
-                if (col.field === 'surtidor') {
+        
+                  // --- Campo: Surtidor ---
+                  if (col.field === 'surtidor') {
                     const hasSurtidor = value !== null && value !== undefined && String(value).trim() !== '';
                     return (
-                    <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                      <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                         <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}>
-                        {label}:
+                          {label}:
                         </Typography>
-                
                         {hasSurtidor ? (
-                        <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
                             {String(value)}
-                        </Typography>
+                          </Typography>
                         ) : (
-                        <Button
+                          <Button
                             variant="contained"
                             color="primary"
                             size="small"
                             disabled={assigningEmpId === row.id}
                             onClick={(e) => {
-                            e.stopPropagation();
-                            handleAsignarSurtidor(row.id);
+                              e.stopPropagation();
+                              handleAsignarSurtidor(row.id);
                             }}
-                        >
+                          >
                             {assigningEmpId === row.id ? 'Asignando…' : 'Asignar'}
-                        </Button>
+                          </Button>
                         )}
-                    </Box>
+                      </Box>
                     );
-                }
-                if (col.field === 'empacador') {
+                  }
+        
+                  // --- Campo: Empacador ---
+                  if (col.field === 'empacador') {
                     const hasEmp = value !== null && value !== undefined && String(value).trim() !== '';
                     return (
-                    <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                      <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                         <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}>
-                        {label}:
+                          {label}:
                         </Typography>
-                
                         {hasEmp ? (
-                        <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
                             {String(value)}
-                        </Typography>
+                          </Typography>
                         ) : (
-                        <Button
+                          <Button
                             variant="contained"
                             color="primary"
                             size="small"
                             onClick={(e) => {
-                            e.stopPropagation();
-                            openEmpacadorModal(row.id); 
+                              e.stopPropagation();
+                              openEmpacadorModal(row.id);
                             }}
-                        >
+                          >
                             Asignar
-                        </Button>
+                          </Button>
                         )}
-                    </Box>
+                      </Box>
                     );
-                }
-                if (col.field === 'etiqueta') {
-                  const hasEtiqueta = Boolean(row[col.field]); // ahora es booleano
-                  const label = col.headerName ?? col.field;
-                  const fileName = `etiqueta_${row.ventas_noventa ?? 'documento'}.pdf`;
-                
-                  return (
-                    <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}>
-                        {label}:
-                      </Typography>
-                
-                      {hasEtiqueta ? (
-                        <Button
-                          variant="outlined"
-                          color="secondary"
-                          size="small"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            try {
-                              const noVenta = row?.ventas_noventa;
-                              if (!noVenta) {
-                                setSnackbar({ open: true, message: 'No. de venta inválido', severity: 'warning' });
-                                return;
-                              }                
-                              const token =
-                                localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-                
-                              const res = await clienteAxios.get('/api/archivos/etiqueta', {
-                                params: { noVenta },
-                                responseType: 'blob',
-                                headers: {
-                                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                                  Accept: 'application/pdf',
-                                },
-                              });
-                              downloadEtiqueta(res.data, fileName);
-                            } catch (err) {
-                              console.error('Error descargando etiqueta:', err);
-                              setSnackbar({ open: true, message: 'No se pudo descargar la etiqueta', severity: 'error' });
-                            }
-                          }}
-                        >
-                          Descargar
-                        </Button>
-                      ) : (
-                        <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
-                          —
+                  }
+        
+                  // --- Campo: Etiqueta (boolean) ---
+                  if (col.field === 'etiqueta') {
+                    const hasEtiqueta = Boolean(row[col.field]);
+                    const fileName = `etiqueta_${row.ventas_noventa ?? 'documento'}.pdf`;
+        
+                    return (
+                      <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}>
+                          {label}:
                         </Typography>
-                      )}
-                    </Box>
-                  );
-                }
-                
-                return (
+        
+                        {hasEtiqueta ? (
+                          <Button
+                            variant="outlined"
+                            color="secondary"
+                            size="small"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                const noVenta = row?.ventas_noventa;
+                                if (!noVenta) {
+                                  setSnackbar({ open: true, message: 'No. de venta inválido', severity: 'warning' });
+                                  return;
+                                }
+                                const token =
+                                  localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        
+                                const res = await clienteAxios.get('/api/archivos/etiqueta', {
+                                  params: { noVenta },
+                                  responseType: 'blob',
+                                  headers: {
+                                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                                    Accept: 'application/pdf',
+                                  },
+                                });
+        
+                                downloadEtiqueta(res.data, fileName);
+                              } catch (err) {
+                                console.error('Error descargando etiqueta:', err);
+                                setSnackbar({ open: true, message: 'No se pudo descargar la etiqueta', severity: 'error' });
+                              }
+                            }}
+                          >
+                            Descargar
+                          </Button>
+                        ) : (
+                          <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
+                            —
+                          </Typography>
+                        )}
+                      </Box>
+                    );
+                  }
+        
+                  // --- Default ---
+                  return (
                     <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                       <Typography
                         variant="body2"
