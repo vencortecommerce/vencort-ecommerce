@@ -387,7 +387,33 @@ export default function DataGridMobile() {
       setAssigningEmpId(null);
     }
   };
-  
+
+  // Anchos fijos
+  const LABEL_WIDTH = 128;
+
+  const labelSx = React.useMemo(
+    () => ({
+      fontWeight: 600,
+      flex: `0 0 ${LABEL_WIDTH}px`,
+      minWidth: LABEL_WIDTH,
+      maxWidth: LABEL_WIDTH,
+      flexShrink: 0,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    }),
+    []
+  );
+
+  const rowLineSx = { display: 'flex', alignItems: 'flex-start', gap: 0 };
+
+  const valueSx = {
+    wordBreak: 'break-word',
+    overflowWrap: 'anywhere',
+    flex: 1,
+    minWidth: 0,
+  };
+
 
   return (
     <Box>
@@ -591,12 +617,12 @@ export default function DataGridMobile() {
                   if (col.field === 'surtidor') {
                     const hasSurtidor = value !== null && value !== undefined && String(value).trim() !== '';
                     return (
-                      <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}>
+                      <Box key={col.field} sx={rowLineSx}>
+                        <Typography variant="body2" sx={labelSx}>
                           {label}:
                         </Typography>
                         {hasSurtidor ? (
-                          <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" sx={valueSx}>
                             {String(value)}
                           </Typography>
                         ) : (
@@ -621,12 +647,12 @@ export default function DataGridMobile() {
                   if (col.field === 'empacador') {
                     const hasEmp = value !== null && value !== undefined && String(value).trim() !== '';
                     return (
-                      <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}>
+                      <Box key={col.field} sx={rowLineSx}>
+                        <Typography variant="body2" sx={labelSx}>
                           {label}:
                         </Typography>
                         {hasEmp ? (
-                          <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" sx={valueSx}>
                             {String(value)}
                           </Typography>
                         ) : (
@@ -652,8 +678,8 @@ export default function DataGridMobile() {
                     const fileName = `etiqueta_${row.ventas_noventa ?? 'documento'}.pdf`;
         
                     return (
-                      <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}>
+                      <Box key={col.field} sx={rowLineSx}>
+                        <Typography variant="body2" sx={labelSx}>
                           {label}:
                         </Typography>
         
@@ -692,7 +718,7 @@ export default function DataGridMobile() {
                             Descargar
                           </Button>
                         ) : (
-                          <Typography variant="body2" sx={{ wordBreak: 'break-word', flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" sx={valueSx}>
                             —
                           </Typography>
                         )}
@@ -702,16 +728,16 @@ export default function DataGridMobile() {
         
                   // --- Default ---
                   return (
-                    <Box key={col.field} sx={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <Box key={col.field} sx={rowLineSx}>
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 600, minWidth: 96, flexShrink: 0 }}
+                        sx={labelSx}
                       >
                         {label}:
                       </Typography>
                       <Typography
                         variant="body2"
-                        sx={{ wordBreak: 'break-word', overflowWrap: 'anywhere', flex: 1, minWidth: 0 }}
+                        sx={valueSx}
                       >
                         {value === null || value === undefined || value === '' ? '—' : String(value)}
                       </Typography>
