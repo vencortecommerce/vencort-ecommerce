@@ -5,7 +5,7 @@ import { Box, Button, Snackbar, Alert,
   Dialog, DialogTitle, DialogContent, DialogActions,
   CircularProgress
 } from '@mui/material';
-import { columns } from '../internals/data/gridData';
+import { columns } from '../internals/data/gridDataMobile';
 import clienteAxios from '../src/context/Config';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
@@ -40,54 +40,6 @@ export default function DataGridMobile() {
   const [targetVentaId, setTargetVentaId] = React.useState(null);
   const [assigning, setAssigning] = React.useState(false);
 
-  // ----- Visibilidad de columnas -----
-  const columnVisibilityModel = React.useMemo(() => ({
-    origen:false,
-    ventas_descripcionestado: false,
-    ventas_ingresosproducto: false,
-    ventas_ingresosenvio: false,
-    ventas_cargoventa: false,
-    ventas_costosenvio: false,
-    ventas_anulacionesreembolsos: false,
-    ventas_totalmxn: false,
-    publicidad_ventapublicidad: false,
-    publicaciones_sku: false,
-    publicaciones_variante: false,
-    publicaciones_tipopublicacion: false,
-    facturacion_facturaadjunta: false,
-    facturacion_datospersonalesempresa: false,
-    facturacion_tiponumerodocumento: false,
-    facturacion_direccion: false,
-    facturacion_tipocontribuyente: false,
-    facturacion_cfdi: false,
-    facturacion_tipousuario: false,
-    facturacion_regimenfiscal: false,
-    compradores_comprador: false,
-    compradores_ife: false,
-    compradores_domicilio: false,
-    compradores_municipioalcaldia: false,
-    compradores_estado: false,
-    compradores_codigopostal: false,
-    compradores_pais: false,
-    envios_formaentrega: false,
-    envios_fechaencamino: false,
-    envios_fechaentregado: false,
-    envios_transportista: false,
-    envios_numeroseguimiento: false,
-    envios_urlseguimiento: false,
-    devoluciones_unidades: false,
-    devoluciones_formaentrega: false,
-    devoluciones_fechaencamino: false,
-    devoluciones_fechaentregado: false,
-    devoluciones_transportista: false,
-    devoluciones_numeroseguimiento: false,
-    devoluciones_urlseguimiento: false,
-    reclamos_unidades: false,
-    reclamos_reclamoabierto: false,
-    reclamos_reclamocerrado: false,
-    reclamos_conmediacion: false,
-  }), []);
-
   const getAvailableOperators = (field) => {
     const col = columns.find((c) => c.field === field);
     if (col?.type === 'number') {
@@ -108,7 +60,7 @@ export default function DataGridMobile() {
       },
     };
     try {
-      const response = await clienteAxios.get('/api/ventas/consulta', config);
+      const response = await clienteAxios.get('/api/ventas/consultaMobile', config);
       const dataWithId = response.data.map((item) => ({
         id: item.idmercadolibre,
         ...item,
@@ -320,11 +272,10 @@ export default function DataGridMobile() {
 
   const visibleColumns = React.useMemo(() => {
     return columns.filter((col) => {
-      const hiddenByModel = columnVisibilityModel[col.field] === false;
       const hiddenByCol = col.hide === true;
-      return !(hiddenByModel || hiddenByCol);
+      return !(hiddenByCol);
     });
-  }, [columns, columnVisibilityModel]);
+  }, [columns]);
 
   const displayedRows = applyFilterToRows(rows);
 
@@ -333,12 +284,12 @@ export default function DataGridMobile() {
     if (!raw) return null;
     try {
       const obj = JSON.parse(raw);
-      return obj.name || obj.nombre || obj.username || obj.user || obj.email || raw;
+      return obj.name + ' ' + obj.lastname;
     } catch {
       return raw;
     }
   };
-
+  
   const handleAsignarSurtidor = async (id) => {
     if (!id) {
       setSnackbar({ open: true, message: 'Id de venta inválido', severity: 'warning' });

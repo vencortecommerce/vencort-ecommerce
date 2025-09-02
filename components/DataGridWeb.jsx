@@ -98,61 +98,6 @@ export default function DataGridWeb() {
         }
         return ['contains', 'equals', 'startsWith', 'endsWith'];
     };
-        
-    const handleAsignarSurtidor = async () => {
-        setAssigning(true);
-        try {
-          const idArray = Array.from(selectedIds?.ids ?? []);
-          const queryParams = idArray.map((id) => `idmercadolibre=${id}`).join('&');
-          const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-          const usuario = localStorage.getItem('user') || sessionStorage.getItem('user');
-          const config = {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          };
-          const response = await clienteAxios.post(`/api/ventas/asignarSurtidor?${queryParams}`, {}, config);
-          setSnackbar({ open: true, message: 'Procesado correctamente', severity: 'success' });
-    
-          const sessionName = usuario ?? 'Asignado';
-          const fullName =
-          [ (typeof sessionName === 'string' ? JSON.parse(sessionName) : sessionName)?.name,
-            (typeof sessionName === 'string' ? JSON.parse(sessionName) : sessionName)?.lastname
-          ].filter(Boolean).join(' ');
-
-          setRows((prev) =>
-            prev.map((r) => (idArray.includes(r.id) ? { ...r, surtidor: fullName } : r))
-          );
-
-          setSnackbar({ open: true, message: 'Procesado correctamente', severity: 'success' });
-          setSelectedIds([]);
-        } catch (error) {
-          if (error.response?.status === 401) {
-            const errorMessage = error.response.data?.error || 'Perfil no correspondiente a Surtidor .';
-            setSnackbar({ open: true, message: errorMessage, severity: 'error' });
-          } else {
-            setSnackbar({ open: true, message: 'Error al procesar la solicitud', severity: 'error' });
-          }
-        } finally {     
-          setAssigning(false);
-        }
-    };
-    
-    const canntAssignSurtidor = () => {
-        const idArray = Array.from(selectedIds?.ids ?? []);
-        if (idArray.length === 0) {
-          return false;
-        }
-        for (const id of idArray) {
-          const row = rows.find((r) => r.id === id);
-          if (row && row.surtidor) {
-            return true;
-          }
-        }
-        return false;
-    };
-
 
     return (
         <Box ><br/>
@@ -293,17 +238,7 @@ export default function DataGridWeb() {
             },
           },
         }}
-      /><Box mt={2} display="flex" gap={2}>
-      <Button
-        variant="contained"
-        color="success"
-        disabled={assigning || !selectedIds?.ids || selectedIds.ids.size === 0 || canntAssignSurtidor()}
-        onClick={handleAsignarSurtidor}
-      >
-        {assigning ? 'Procesando...' : 'Asignar Surtidor'}
-      </Button>
-    </Box>
-
+      />
         <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}

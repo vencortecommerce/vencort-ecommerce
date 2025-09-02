@@ -40,6 +40,7 @@ export const EmpacadorCell = ({ row }) => {
     }
   };
 
+
   return (
     <>
       {row.empacador ? (
@@ -101,6 +102,76 @@ export const EmpacadorCell = ({ row }) => {
   );
 };
 
+export const SurtidorCell = ({ row }) => {
+  const [assigning, setAssigning] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const handleAsignarSurtidor = async () => {
+    setAssigning(true);
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },      };
+      const queryParams = `idmercadolibre=${row.idmercadolibre}`;
+      await clienteAxios.post(`/api/ventas/asignarSurtidor?${queryParams}`, {}, config);
+      const sessionName = getSessionUserName() ?? 'Asignado';
+      row.surtidor = sessionName;
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        const msg = error.response?.data?.error || 'Perfil no correspondiente a Surtidor.';
+        setSnackbarMessage(msg);
+      } else {
+        const msg = 'Error al asignar Surtidor';
+        setSnackbarMessage(msg);
+      }
+      setShowSnackbar(true);
+      console.error('Error al asignar empacador', e);
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  return (
+    <>
+      {row.surtidor ? (
+        <div>{row.surtidor}</div>
+      ) : (
+        <Button
+            onClick={handleAsignarSurtidor}
+            variant="outlined"
+            color="info"
+            size="small"
+          >
+            {assigning ? 'Asignando...' : 'Asignar'}
+          </Button>
+      )}
+      <Snackbar
+        open={showSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setShowSnackbar(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setShowSnackbar(false)} severity="error" sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </>
+  );
+};
+
+const getSessionUserName = () => {
+  const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
+  if (!raw) return null;
+  try {
+    const obj = JSON.parse(raw);
+    return obj.name + ' ' + obj.lastname;
+  } catch {
+    return raw;
+  }
+};
 
 function getDaysInMonth(month, year) {
   const date = new Date(year, month, 0);
@@ -306,6 +377,7 @@ export const columns = [
     headerName: 'Surtidor',
     flex: 0.5,
     minWidth: 150,
+    renderCell: (params) => <SurtidorCell row={params.row} />
   },
   {
     field: 'empacador',
