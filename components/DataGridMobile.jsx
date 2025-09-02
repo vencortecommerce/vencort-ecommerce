@@ -40,6 +40,11 @@ export default function DataGridMobile() {
   const [targetVentaId, setTargetVentaId] = React.useState(null);
   const [assigning, setAssigning] = React.useState(false);
 
+
+  // Imágenes
+  const [imagesByVenta, setImagesByVenta] = React.useState({});
+  const [loadingImagesVenta, setLoadingImagesVenta] = React.useState(null);
+
   // ----- Visibilidad de columnas -----
   const columnVisibilityModel = React.useMemo(() => ({
     origen:false,
@@ -388,6 +393,69 @@ export default function DataGridMobile() {
       setAssigningEmpId(null);
     }
   };
+  function toImageSrc(value, mimeFallback = 'image/jpeg') {
+    if (!value) return null;
+      if (typeof value === 'string') {
+      if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) {
+        return value;
+      }
+      return `data:${mimeFallback};base64,${value}`;
+    }
+      if (Array.isArray(value)) {
+      const blob = new Blob([new Uint8Array(value)], { type: mimeFallback });
+      return URL.createObjectURL(blob);
+    }
+    if (value instanceof ArrayBuffer) {
+      const blob = new Blob([new Uint8Array(value)], { type: mimeFallback });
+      return URL.createObjectURL(blob);
+    }
+    if (ArrayBuffer.isView(value)) {
+      const blob = new Blob([value], { type: mimeFallback });
+      return URL.createObjectURL(blob);
+    }
+    if (typeof value === 'object') {
+      const guess =
+        value.imagen || value.image || value.foto || value.bytes || value.data || value.src;
+      return toImageSrc(guess, mimeFallback);
+    }
+    return null;
+  }
+
+  async function fetchImagenesOrden(noVenta) {
+    if (!noVenta) return;
+    try {
+      setLoadingImagesVenta(noVenta);
+  
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const res = await clienteAxios.get('/api/archivos/imagenesOrden', {
+        params: { noVenta },
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Accept: 'application/json',
+        },
+        responseType: 'json',
+      });
+      const list = Array.isArray(res.data) ? res.data : (res.data?.items || []);
+  
+      const normalized = list.map((it, idx) => ({
+        sku:
+          it.sku ??
+          it.SKU ??
+          it.producto ??
+          it.codigo ??
+          it.id ??
+          `SKU_${idx + 1}`,
+        src: toImageSrc(it.imagen ?? it.image ?? it.foto ?? it.bytes ?? it.data ?? it.src),
+      })).filter(x => x.src);
+  
+      setImagesByVenta(prev => ({ ...prev, [noVenta]: normalized }));
+    } catch (err) {
+      console.error('Error obteniendo imágenes de la orden:', err);
+      setSnackbar({ open: true, message: 'No se pudieron cargar las imágenes del pedido', severity: 'error' });
+    } finally {
+      setLoadingImagesVenta(null);
+    }
+  }  
 
   // Anchos fijos
   const LABEL_WIDTH = 128;
@@ -415,6 +483,15 @@ export default function DataGridMobile() {
     minWidth: 0,
   };
 
+
+  React.useEffect(() => {
+    if (loading || !activeId) return;
+    const activeRow = rows.find(r => r.id === activeId);
+    const noVenta = activeRow?.ventas_noventa;
+    if (!noVenta) return;
+    if (imagesByVenta[noVenta]) return;
+    fetchImagenesOrden(noVenta);
+  }, [activeId, loading, rows, imagesByVenta]); 
 
   return (
     <Box>
@@ -564,7 +641,7 @@ export default function DataGridMobile() {
             <CardContent sx={{ p: 2, boxSizing: 'border-box' }}>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
                 <ButtonBase
-                  onClick={(e) => { e.stopPropagation(); toggleRowDetails(row.id); }}
+                  onClick={(e) => { e.stopPropagation(); setActiveId(row.id); toggleRowDetails(row.id); }}
                   onPointerDown={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
                   sx={{
@@ -746,6 +823,102 @@ export default function DataGridMobile() {
                   );
                 })}
               </Stack>
+              {/* ====== Productos (SKU / Imagen) — solo para la venta activa ====== */}
+              {row.id === activeId && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    Productos
+                  </Typography>
+
+                  {/* Loader mientras carga esa venta */}
+                  {loadingImagesVenta === row.ventas_noventa ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+                      <CircularProgress size={20} />
+                      <Typography variant="body2">Cargando imágenes...</Typography>
+                    </Box>
+                  ) : (
+                    (() => {
+                      const items = imagesByVenta[row.ventas_noventa] || [];
+                      if (!items.length) {
+                        return (
+                          <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                            Sin imágenes para esta venta.
+                          </Typography>
+                        );
+                      }
+
+                      // “Tabla” simple para móvil
+                      return (
+                        <Box
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {/* Header */}
+                          <Box
+                            sx={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 96px',
+                              px: 1,
+                              py: 0.5,
+                              bgcolor: 'action.hover',
+                            }}
+                          >
+                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              SKU
+                            </Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                              Imagen
+                            </Typography>
+                          </Box>
+
+                          {/* Rows */}
+                          {items.map((it, i) => (
+                            <Box
+                              key={`${it.sku}-${i}`}
+                              sx={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 96px',
+                                alignItems: 'center',
+                                px: 1,
+                                py: 0.75,
+                                borderTop: '1px solid',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              <Typography variant="body2" sx={{ pr: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {it.sku}
+                              </Typography>
+
+                              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <Box
+                                  component="img"
+                                  src={it.src}
+                                  alt={`SKU ${it.sku}`}
+                                  sx={{
+                                    width: 64,
+                                    height: 64,
+                                    objectFit: 'contain',
+                                    borderRadius: 1,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    bgcolor: 'background.paper',
+                                  }}
+                                  loading="lazy"
+                                  draggable={false}
+                                />
+                              </Box>
+                            </Box>
+                          ))}
+                        </Box>
+                      );
+                    })()
+                  )}
+                </Box>
+              )}
             </CardContent>
           </Card>
         );
