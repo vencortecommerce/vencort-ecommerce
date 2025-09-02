@@ -56,6 +56,7 @@ export default function DataGridMobile() {
     ventas_anulacionesreembolsos: false,
     ventas_totalmxn: false,
     publicidad_ventapublicidad: false,
+    publicaciones_sku: false,
     publicaciones_variante: false,
     publicaciones_tipopublicacion: false,
     facturacion_facturaadjunta: false,
@@ -440,34 +441,44 @@ export default function DataGridMobile() {
     return null;
   }
   
-
-  // quita toImageSrc si ya no lo usas
-
   async function fetchImagenesOrden(noVenta) {
     if (!noVenta) return;
     try {
       setLoadingImagesVenta(noVenta);
-
+  
       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
       const { data } = await clienteAxios.get('/api/archivos/imagenesOrden', {
         params: { noVenta },
-        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), Accept: 'application/json' },
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Accept: 'application/json',
+        },
         responseType: 'json',
       });
-
-      const list = Array.isArray(data) ? data : (data?.items || []);
-
-      // helper para quitar encabezado si viniera "data:*;base64,"
-      const stripB64 = (s) => String(s || '').replace(/^data:[^;]+;base64,/, '');
-
-      const normalized = list
-        .map((it, idx) => ({
-          sku: it.sku ?? it.SKU ?? it.producto ?? it.codigo ?? it.id ?? `SKU_${idx + 1}`,
-          // asumimos JPEG base64
-          src: it.imagen ? `data:image/jpeg;base64,${stripB64(it.imagen)}` : null,
-        }))
-        .filter(x => x.src);
-
+  
+      const list =
+        Array.isArray(data) ? data :
+        data?.items || data?.imagenes || data?.results || [];
+  
+      const normalized = list.map((it, idx) => {
+        const sku =
+          it.sku ?? it.SKU ?? it.skuProducto ?? it.producto ?? it.codigo ?? it.id ?? `SKU_${idx + 1}`;
+  
+        const mime =
+          it.mimeType || it.mimetype || it.contentType || it.tipo || undefined;
+  
+        const src = toImageSrc(
+          it.url || it.href || it.imagen || it.image || it.foto || it.bytes || it.data || it.src,
+          mime
+        );
+  
+        if (!src) {
+          console.warn('Imagen sin src normalizable:', it);
+        }
+  
+        return { sku, src };
+      }).filter(x => x.src);
+  
       setImagesByVenta(prev => ({ ...prev, [noVenta]: normalized }));
     } catch (err) {
       console.error('Error obteniendo imágenes de la orden:', err);
@@ -476,7 +487,7 @@ export default function DataGridMobile() {
       setLoadingImagesVenta(null);
     }
   }
-
+  
 
   // Anchos fijos
   const LABEL_WIDTH = 128;
@@ -915,13 +926,16 @@ export default function DataGridMobile() {
                               </Typography>
 
                               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                <Box
+                              <Box
                                   component="img"
                                   src={it.src}
                                   alt={`SKU ${it.sku}`}
-                                  loading="lazy"
-                                  decoding="async"
-                                  onError={(e) => { e.currentTarget.style.opacity = 0.3; }}
+                                  onError={(e) => {
+                                    console.warn('No se pudo mostrar imagen para', it.sku, it.src);
+                                    e.currentTarget.src = ''; // evita ícono roto
+                                    e.currentTarget.style.opacity = 0.3;
+                                    e.currentTarget.title = 'Imagen no disponible';
+                                  }}
                                   sx={{
                                     width: 64,
                                     height: 64,
@@ -931,6 +945,8 @@ export default function DataGridMobile() {
                                     borderColor: 'divider',
                                     bgcolor: 'background.paper',
                                   }}
+                                  loading="lazy"
+                                  draggable={false}
                                 />
 
                               </Box>
