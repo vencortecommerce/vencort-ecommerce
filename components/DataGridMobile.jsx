@@ -56,7 +56,6 @@ export default function DataGridMobile() {
     ventas_anulacionesreembolsos: false,
     ventas_totalmxn: false,
     publicidad_ventapublicidad: false,
-    publicaciones_sku: false,
     publicaciones_variante: false,
     publicaciones_tipopublicacion: false,
     facturacion_facturaadjunta: false,
@@ -393,61 +392,82 @@ export default function DataGridMobile() {
       setAssigningEmpId(null);
     }
   };
-  function toImageSrc(value, mimeFallback = 'image/jpeg') {
+  function toImageSrc(value, mimeHint) {
     if (!value) return null;
-      if (typeof value === 'string') {
+  
+    // 1) Strings
+    if (typeof value === 'string') {
+      // Si ya viene como URL o data URL
       if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) {
         return value;
       }
-      return `data:${mimeFallback};base64,${value}`;
-    }
-      if (Array.isArray(value)) {
-      const blob = new Blob([new Uint8Array(value)], { type: mimeFallback });
-      return URL.createObjectURL(blob);
-    }
-    if (value instanceof ArrayBuffer) {
-      const blob = new Blob([new Uint8Array(value)], { type: mimeFallback });
-      return URL.createObjectURL(blob);
-    }
-    if (ArrayBuffer.isView(value)) {
-      const blob = new Blob([value], { type: mimeFallback });
-      return URL.createObjectURL(blob);
-    }
-    if (typeof value === 'object') {
+      // Quita encabezado si viene incrustado y normaliza
+      const b64 = value.replace(/^data:[^;]+;base64,/, '');
+      // Heurística de mime si no viene explícito
       const guess =
-        value.imagen || value.image || value.foto || value.bytes || value.data || value.src;
-      return toImageSrc(guess, mimeFallback);
+        mimeHint ||
+        (b64.startsWith('/9j/') ? 'image/jpeg'
+          : b64.startsWith('iVBOR') ? 'image/png'
+          : b64.startsWith('R0lGOD') ? 'image/gif'
+          : b64.startsWith('UklGR') ? 'image/webp'
+          : 'image/jpeg');
+  
+      return `data:${guess};base64,${b64}`;
     }
+  
+    // 2) Arrays o buffers
+    const toU8 = (v) => {
+      if (Array.isArray(v)) return new Uint8Array(v);
+      if (v instanceof ArrayBuffer) return new Uint8Array(v);
+      if (ArrayBuffer.isView(v)) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
+      return null;
+    };
+    const u8 = toU8(value);
+    if (u8) {
+      const type = mimeHint || 'image/jpeg';
+      const blob = new Blob([u8], { type });
+      return URL.createObjectURL(blob);
+    }
+  
+    // 3) Objetos con diferentes llaves
+    if (typeof value === 'object') {
+      const type = value.mimeType || value.mimetype || value.contentType || mimeHint;
+      const payload =
+        value.url || value.href || value.imagen || value.image || value.foto || value.bytes || value.data || value.src;
+      return toImageSrc(payload, type);
+    }
+  
     return null;
   }
+  
+
+  // quita toImageSrc si ya no lo usas
 
   async function fetchImagenesOrden(noVenta) {
     if (!noVenta) return;
     try {
       setLoadingImagesVenta(noVenta);
-  
+
       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      const res = await clienteAxios.get('/api/archivos/imagenesOrden', {
+      const { data } = await clienteAxios.get('/api/archivos/imagenesOrden', {
         params: { noVenta },
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          Accept: 'application/json',
-        },
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), Accept: 'application/json' },
         responseType: 'json',
       });
-      const list = Array.isArray(res.data) ? res.data : (res.data?.items || []);
-  
-      const normalized = list.map((it, idx) => ({
-        sku:
-          it.sku ??
-          it.SKU ??
-          it.producto ??
-          it.codigo ??
-          it.id ??
-          `SKU_${idx + 1}`,
-        src: toImageSrc(it.imagen ?? it.image ?? it.foto ?? it.bytes ?? it.data ?? it.src),
-      })).filter(x => x.src);
-  
+
+      const list = Array.isArray(data) ? data : (data?.items || []);
+
+      // helper para quitar encabezado si viniera "data:*;base64,"
+      const stripB64 = (s) => String(s || '').replace(/^data:[^;]+;base64,/, '');
+
+      const normalized = list
+        .map((it, idx) => ({
+          sku: it.sku ?? it.SKU ?? it.producto ?? it.codigo ?? it.id ?? `SKU_${idx + 1}`,
+          // asumimos JPEG base64
+          src: it.imagen ? `data:image/jpeg;base64,${stripB64(it.imagen)}` : null,
+        }))
+        .filter(x => x.src);
+
       setImagesByVenta(prev => ({ ...prev, [noVenta]: normalized }));
     } catch (err) {
       console.error('Error obteniendo imágenes de la orden:', err);
@@ -455,7 +475,8 @@ export default function DataGridMobile() {
     } finally {
       setLoadingImagesVenta(null);
     }
-  }  
+  }
+
 
   // Anchos fijos
   const LABEL_WIDTH = 128;
@@ -898,6 +919,9 @@ export default function DataGridMobile() {
                                   component="img"
                                   src={it.src}
                                   alt={`SKU ${it.sku}`}
+                                  loading="lazy"
+                                  decoding="async"
+                                  onError={(e) => { e.currentTarget.style.opacity = 0.3; }}
                                   sx={{
                                     width: 64,
                                     height: 64,
@@ -907,9 +931,8 @@ export default function DataGridMobile() {
                                     borderColor: 'divider',
                                     bgcolor: 'background.paper',
                                   }}
-                                  loading="lazy"
-                                  draggable={false}
                                 />
+
                               </Box>
                             </Box>
                           ))}
