@@ -77,7 +77,6 @@ export default function SignIn() {
 
       localStorage.removeItem('token');
       localStorage.setItem('authToken', token);
-      console.info("Resultado ",JSON.stringify(result));
       localStorage.setItem('user', JSON.stringify(result));
       setSnackbarMessage('Sesión iniciada correctamente');
       setSnackbarSeverity('success');
