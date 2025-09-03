@@ -440,20 +440,25 @@ export default function DataGridMobile() {
     return null;
   }
   
-  async function fetchImagenesOrden(noVenta) {
+  async function fetchImagenesOrden(noVenta,sku) {
     if (!noVenta) return;
     try {
       setLoadingImagesVenta(noVenta);
   
       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      const { data } = await clienteAxios.get('/api/archivos/imagenesOrden', {
-        params: { noVenta },
+
+      const config = {
         headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        responseType: 'json',
-      });
+      };
+
+      const  { data } = await clienteAxios.get(
+        `/api/archivos/imagenesOrden?noVenta=${noVenta}&sku=${sku}`,
+        {},
+        config
+      );
   
       const list =
         Array.isArray(data) ? data :
@@ -519,9 +524,10 @@ export default function DataGridMobile() {
     if (loading || !activeId) return;
     const activeRow = rows.find(r => r.id === activeId);
     const noVenta = activeRow?.ventas_noventa;
+    const sku = activeRow?.publicaciones_sku;
     if (!noVenta) return;
     if (imagesByVenta[noVenta]) return;
-    fetchImagenesOrden(noVenta);
+    fetchImagenesOrden(noVenta,sku);
   }, [activeId, loading, rows, imagesByVenta]); 
 
   return (
