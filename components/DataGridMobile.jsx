@@ -56,7 +56,6 @@ export default function DataGridMobile() {
     ventas_anulacionesreembolsos: false,
     ventas_totalmxn: false,
     publicidad_ventapublicidad: false,
-    publicaciones_sku: false,
     publicaciones_variante: false,
     publicaciones_tipopublicacion: false,
     facturacion_facturaadjunta: false,
