@@ -137,7 +137,15 @@ export default function DataGridMobile() {
         ...item,
       }));
       if (mountedRef.current) {
-        setRows(dataWithId);
+        setRows((prev) => {
+          const byId = new Map(prev.map(r => [r.id, r]));
+          return dataWithId.map(nd => {
+            const pr = byId.get(nd.id);
+            return pr
+              ? { ...nd, __imagenesOrden: pr.__imagenesOrden, __imagenesEstado: pr.__imagenesEstado } // ✅
+              : nd;
+          });
+        });
         if (!activeId && dataWithId.length) {
           setActiveId(dataWithId[0].id);
         }
@@ -459,57 +467,59 @@ async function toStableSrc(payload, mimeHint, token) {
   return maybe;
 }
 
-
   //Consulta de imagenes
-async function fetchImagenesOrden(noVenta, sku, { silent = false } = {}) {
-  if (!noVenta) return;
-
-  if (imagesByVentaRef.current[noVenta] !== undefined) return; 
-  const requestId = !silent ? ++imageReqIdRef.current : imageReqIdRef.current; 
-  if (!silent) setLoadingImagesVenta(noVenta);                                 
-
-  try {
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    const config = {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    };
-
-    const { data } = await clienteAxios.get(
-      `/api/archivos/imagenesOrden?noVenta=${noVenta}&sku=${sku}`,
-      {},
-      config
-    );
-
-    const list = Array.isArray(data) ? data : (data?.items || data?.imagenes || data?.results || []);
-    const normalized = (await Promise.all(
-      list.map(async (it, idx) => {
-        const sku =
+  async function fetchImagenesOrden(noVenta, sku, { silent = false } = {}) {
+    if (!noVenta) return;
+  
+    const rowActual = rows.find(r => r.ventas_noventa === noVenta);
+    if (rowActual?.__imagenesEstado) return; 
+  
+    const requestId = !silent ? ++imageReqIdRef.current : imageReqIdRef.current;
+    if (!silent) setLoadingImagesVenta(noVenta);
+  
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } };
+  
+      const { data } = await clienteAxios.get(
+        `/api/archivos/imagenesOrden?noVenta=${noVenta}&sku=${sku}`,
+        {},
+        config
+      );
+  
+      const list = Array.isArray(data) ? data : (data?.items || data?.imagenes || data?.results || []);
+      const normalized = list.map((it, idx) => {
+        const skuLocal =
           it.sku ?? it.SKU ?? it.skuProducto ?? it.producto ?? it.codigo ?? it.id ?? `SKU_${idx + 1}`;
         const mime = it.mimeType || it.mimetype || it.contentType || it.tipo || undefined;
         const payload = it.url || it.href || it.imagen || it.image || it.foto || it.bytes || it.data || it.src;
-
-        const stable = await toStableSrc(payload, mime, token); 
-        return stable ? { sku, src: stable } : null;
-      })
-    )).filter(Boolean);
-
-    setImagesByVenta(prev => (prev[noVenta] === undefined
-      ? { ...prev, [noVenta]: normalized }  
-      : prev));
-    
-    if (normalized.length === 0) {
-    }
-  } catch (err) {
-    console.error('Error obteniendo imágenes de la orden:', err);
-    setSnackbar({ open: true, message: 'No se pudieron cargar las imágenes del pedido', severity: 'error' });
-    setImagesByVenta(prev => (prev[noVenta] === undefined ? { ...prev, [noVenta]: [] } : prev));
-  } finally {
-    if (!silent) {
-      setLoadingImagesVenta(prev => (imageReqIdRef.current === requestId && prev === noVenta ? null : prev));
+        const src = toImageSrc(payload, mime);
+        return src ? { sku: skuLocal, src } : null;
+      }).filter(Boolean);
+  
+      setRows(prev => prev.map(r =>
+        r.ventas_noventa === noVenta
+          ? { ...r, __imagenesOrden: normalized, __imagenesEstado: normalized.length ? 'ok' : 'empty' }
+          : r
+      ));
+  
+  
+    } catch (err) {
+      console.error('Error obteniendo imágenes de la orden:', err);
+      setSnackbar({ open: true, message: 'No se pudieron cargar las imágenes del pedido', severity: 'error' });
+  
+      setRows(prev => prev.map(r =>
+        r.ventas_noventa === noVenta
+          ? { ...r, __imagenesOrden: [], __imagenesEstado: 'empty' }
+          : r
+      ));
+    } finally {
+      if (!silent) {
+        setLoadingImagesVenta(prev => (imageReqIdRef.current === requestId && prev === noVenta ? null : prev));
+      }
     }
   }
-}
-
+  
   // Anchos fijos
   const LABEL_WIDTH = 128;
 
@@ -566,20 +576,20 @@ async function fetchImagenesOrden(noVenta, sku, { silent = false } = {}) {
 
   React.useEffect(() => {
     if (loading || !activeId) return;
-    const idx = displayedRows.findIndex(r => r.id === activeId); 
+    const idx = displayedRows.findIndex(r => r.id === activeId);
     const activeRow = rows.find(r => r.id === activeId);
     const noVenta = activeRow?.ventas_noventa;
     const sku = activeRow?.publicaciones_sku;
     if (!noVenta) return;
-    if (imagesByVentaRef.current[noVenta] !== undefined) {
+    if (activeRow?.__imagenesEstado) {
       if (idx >= 0) prefetchNeighbors(idx);
-      return; 
+      return;
     }
-
-    fetchImagenesOrden(noVenta, sku, { silent: false }); 
-
-    if (idx >= 0) prefetchNeighbors(idx);   
-  }, [activeId, loading, rows, displayedRows, prefetchNeighbors]); 
+    fetchImagenesOrden(noVenta, sku, { silent: false });
+    if (idx >= 0) prefetchNeighbors(idx);
+  }, [activeId, loading, rows, displayedRows, prefetchNeighbors]);
+  
+  
 
   return (
     <Box>
@@ -711,6 +721,8 @@ async function fetchImagenesOrden(noVenta, sku, { silent = false } = {}) {
         const isExpanded = expandedRows.has(row.id);
         const colsToRender = isExpanded ? allNonHiddenColumns : visibleColumns;
         const isML = String(row.origen || '').toUpperCase() === 'MERCADO LIBRE';
+        const hasFixedImgs = Array.isArray(row.__imagenesOrden) && row.__imagenesOrden.length > 0;
+        const shouldShowProductos = isActive || hasFixedImgs;
 
         return (
           <Card
@@ -914,116 +926,139 @@ async function fetchImagenesOrden(noVenta, sku, { silent = false } = {}) {
                 })}
               </Stack>
 
-             {/* ====== Productos (SKU / Imagen) — solo para la venta activa ====== */}
-             {row.id === activeId && (
-  <Box sx={{ mt: 2 }}>
-    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-      Productos
-    </Typography>
-
-    {(() => {
-      const cached = imagesByVenta[row.ventas_noventa];
-
-      if (cached !== undefined) {
-        if (cached.length === 0) {
-          return (
-            <Typography variant="body2" sx={{ opacity: 0.7 }}>
-              Sin imágenes para esta venta.
-            </Typography>
-          );
-        }
-        return (
-          <Box
-            sx={{
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1,
-              overflow: 'hidden',
-            }}
-          >
-            {/* Header */}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 96px',
-                px: 1,
-                py: 0.5,
-                bgcolor: 'action.hover',
-              }}
-            >
-              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                SKU
-              </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>
-                Imagen
-              </Typography>
-            </Box>
-
-            {/* Rows */}
-            {cached.map((it, i) => (
-              <Box
-                key={`${it.sku}-${i}`}
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 96px',
-                  alignItems: 'center',
-                  px: 1,
-                  py: 0.75,
-                  borderTop: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <Typography variant="body2" sx={{ pr: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {it.sku}
+             {/* ====== Productos (SKU / Imagen) ====== */}
+            {shouldShowProductos && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Productos
                 </Typography>
 
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <Box
-                    component="img"
-                    src={it.src}
-                    alt={`SKU ${it.sku}`}
-                    onError={(e) => {
-                      console.warn('No se pudo mostrar imagen para', it.sku, it.src);
-                      e.currentTarget.style.opacity = 0.3;
-                      e.currentTarget.title = 'Imagen no disponible';
-                    }}
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      objectFit: 'contain',
-                      borderRadius: 1,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      bgcolor: 'background.paper',
-                    }}
-                    loading="lazy"
-                    draggable={false}
-                  />
-                </Box>
+                {(() => {
+                  if (!isActive && hasFixedImgs) {
+                    return (
+                      <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 96px', px: 1, py: 0.5, bgcolor: 'action.hover' }}>
+                          <Typography variant="caption" sx={{ fontWeight: 700 }}>SKU</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>Imagen</Typography>
+                        </Box>
+
+                        {row.__imagenesOrden.map((it, i) => (
+                          <Box
+                            key={`${it.sku}-${i}`}
+                            sx={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 96px',
+                              alignItems: 'center',
+                              px: 1,
+                              py: 0.75,
+                              borderTop: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ pr: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {it.sku}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                              <Box
+                                component="img"
+                                src={it.src}
+                                alt={`SKU ${it.sku}`}
+                                onError={(e) => {
+                                  console.warn('No se pudo mostrar imagen para', it.sku, it.src);
+                                  e.currentTarget.style.opacity = 0.6;
+                                  e.currentTarget.title = 'Imagen no disponible';
+                                }}
+                                sx={{
+                                  width: 64,
+                                  height: 64,
+                                  objectFit: 'contain',
+                                  borderRadius: 1,
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  bgcolor: 'background.paper',
+                                }}
+                                loading="lazy"
+                                draggable={false}
+                              />
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    );
+                  }
+
+                  const estado = row.__imagenesEstado;
+                  const items  = row.__imagenesOrden; 
+
+                  if (estado === 'ok' && Array.isArray(items) && items.length > 0) {
+                    return (
+                      <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 96px', px: 1, py: 0.5, bgcolor: 'action.hover' }}>
+                          <Typography variant="caption" sx={{ fontWeight: 700 }}>SKU</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>Imagen</Typography>
+                        </Box>
+                        {items.map((it, i) => (
+                          <Box
+                            key={`${it.sku}-${i}`}
+                            sx={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 96px',
+                              alignItems: 'center',
+                              px: 1,
+                              py: 0.75,
+                              borderTop: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ pr: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {it.sku}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                              <Box
+                                component="img"
+                                src={it.src}
+                                alt={`SKU ${it.sku}`}
+                                onError={(e) => {
+                                  console.warn('No se pudo mostrar imagen para', it.sku, it.src);
+                                  e.currentTarget.style.opacity = 0.6;
+                                  e.currentTarget.title = 'Imagen no disponible';
+                                }}
+                                sx={{
+                                  width: 64,
+                                  height: 64,
+                                  objectFit: 'contain',
+                                  borderRadius: 1,
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  bgcolor: 'background.paper',
+                                }}
+                                loading="lazy"
+                                draggable={false}
+                              />
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    );
+                  }
+
+                  if (estado === 'empty') {
+                    return <Typography variant="body2" sx={{ opacity: 0.7 }}>Sin imágenes para esta venta.</Typography>;
+                  }
+
+                  if (loadingImagesVenta === row.ventas_noventa) {
+                    return (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+                        <CircularProgress size={20} />
+                        <Typography variant="body2">Cargando imágenes...</Typography>
+                      </Box>
+                    );
+                  }
+
+                  return <Typography variant="body2" sx={{ opacity: 0.7 }}>Cargando imágenes...</Typography>;
+                })()}
               </Box>
-            ))}
-          </Box>
-        );
-      }
-
-      if (loadingImagesVenta === row.ventas_noventa) {
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
-            <CircularProgress size={20} />
-            <Typography variant="body2">Cargando imágenes...</Typography>
-          </Box>
-        );
-      }
-
-      return (
-        <Typography variant="body2" sx={{ opacity: 0.7 }}>
-          Cargando imágenes...
-        </Typography>
-      );
-    })()}
-  </Box>
-)}
-
+            )}
             </CardContent>
           </Card>
         );
