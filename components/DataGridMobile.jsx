@@ -44,11 +44,9 @@ export default function DataGridMobile() {
   const [imagesByVenta, setImagesByVenta] = React.useState({});
   const [loadingImagesVenta, setLoadingImagesVenta] = React.useState(null);
 
-  // ✅ NUEVO: refs para detectar la tarjeta visible y “throttlear” el scroll
+  // Scroll Visible
   const scrollerRef = React.useRef(null);
-  const scrollRafRef = React.useRef(null);
-
-  // ✅ NUEVO: control fino de concurrencia de fetch de imágenes
+  const imagesByVentaRef = React.useRef({});
   const imageReqIdRef = React.useRef(0);
 
   // ----- Visibilidad de columnas -----
@@ -184,6 +182,10 @@ export default function DataGridMobile() {
     fetchEmpacadores();
   }, []);
   
+  React.useEffect(() => {
+    imagesByVentaRef.current = imagesByVenta;
+  }, [imagesByVenta]);
+
   const openEmpacadorModal = (ventaId) => {
     setTargetVentaId(ventaId);
     setSelectedEmp('');
@@ -400,8 +402,7 @@ export default function DataGridMobile() {
   };
   function toImageSrc(value, mimeHint) {
     if (!value) return null;
-  
-    // 1) Strings
+
     if (typeof value === 'string') {
       if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) {
         return value;
@@ -440,64 +441,54 @@ export default function DataGridMobile() {
   
     return null;
   }
-  
-  // ⚙️ CAMBIO: ahora con control de concurrencia para no “apagar” el loader de otra venta
-  async function fetchImagenesOrden(noVenta, sku) {
+  //Consulta de imagenes
+  async function fetchImagenesOrden(noVenta, sku, { silent = false } = {}) {
     if (!noVenta) return;
 
-    // ✅ NUEVO: id de solicitud; la última siempre “manda”
-    const requestId = ++imageReqIdRef.current;
+    if (imagesByVentaRef.current[noVenta] !== undefined) return; 
+    const requestId = !silent ? ++imageReqIdRef.current : imageReqIdRef.current; 
+    if (!silent) setLoadingImagesVenta(noVenta);                                 
 
-    // mostrar loader para ESTA venta visible
-    setLoadingImagesVenta(noVenta);
     try {
       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
       const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       };
 
-      const  { data } = await clienteAxios.get(
+      const { data } = await clienteAxios.get(
         `/api/archivos/imagenesOrden?noVenta=${noVenta}&sku=${sku}`,
-        {},              // se mantiene tu firma original
+        {},
         config
       );
-  
-      const list =
-        Array.isArray(data) ? data :
-        data?.items || data?.imagenes || data?.results || [];
-  
+
+      const list = Array.isArray(data) ? data : (data?.items || data?.imagenes || data?.results || []);
       const normalized = list.map((it, idx) => {
         const sku =
           it.sku ?? it.SKU ?? it.skuProducto ?? it.producto ?? it.codigo ?? it.id ?? `SKU_${idx + 1}`;
-  
-        const mime =
-          it.mimeType || it.mimetype || it.contentType || it.tipo || undefined;
-  
+        const mime = it.mimeType || it.mimetype || it.contentType || it.tipo || undefined;
         const src = toImageSrc(
           it.url || it.href || it.imagen || it.image || it.foto || it.bytes || it.data || it.src,
           mime
         );
-  
-        if (!src) {
-          console.warn('Imagen sin src normalizable:', it);
-        }
-  
-        return { sku, src };
-      }).filter(x => x.src);
-  
-      setImagesByVenta(prev => ({ ...prev, [noVenta]: normalized }));
+        return src ? { sku, src } : null;
+      }).filter(Boolean);
+
+      setImagesByVenta(prev => (prev[noVenta] === undefined
+        ? { ...prev, [noVenta]: normalized }    // guarda imágenes o []
+        : prev));
+      
+      if (normalized.length === 0) {
+      }
     } catch (err) {
       console.error('Error obteniendo imágenes de la orden:', err);
       setSnackbar({ open: true, message: 'No se pudieron cargar las imágenes del pedido', severity: 'error' });
+      setImagesByVenta(prev => (prev[noVenta] === undefined ? { ...prev, [noVenta]: [] } : prev));
     } finally {
-      // ✅ NUEVO: solo la ÚLTIMA solicitud puede limpiar el loader de su misma venta
-      setLoadingImagesVenta(prev => (imageReqIdRef.current === requestId && prev === noVenta ? null : prev));
+      if (!silent) {
+        setLoadingImagesVenta(prev => (imageReqIdRef.current === requestId && prev === noVenta ? null : prev));
+      }
     }
   }
-
   // Anchos fijos
   const LABEL_WIDTH = 128;
 
@@ -524,36 +515,49 @@ export default function DataGridMobile() {
     minWidth: 0,
   };
 
-  // ⚙️ CAMBIO: además de por click, la venta activa se actualiza por SCROLL (venta visible)
+  // Scroll Inmediata
   const handleScroll = React.useCallback(() => {
-    if (scrollRafRef.current) return;
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
-    scrollRafRef.current = requestAnimationFrame(() => {
-      scrollRafRef.current = null;
-      const { scrollLeft, clientWidth } = scroller;
-      if (!clientWidth) return;
+    const { scrollLeft, clientWidth } = scroller;
+    if (!clientWidth) return;
 
-      const rawIndex = Math.round(scrollLeft / clientWidth);
-      const idx = Math.max(0, Math.min(displayedRows.length - 1, rawIndex));
-      const id = displayedRows[idx]?.id;
-      if (id && id !== activeId) {
-        setActiveId(id);
-      }
-    });
+    const rawIndex = Math.round((scrollLeft + clientWidth * 0.5) / clientWidth); 
+    const idx = Math.max(0, Math.min(displayedRows.length - 1, rawIndex));
+    const id = displayedRows[idx]?.id;
+    if (id && id !== activeId) {
+      setActiveId(id);
+    }
   }, [displayedRows, activeId]);
 
-  // 🔁 Auto-carga de imágenes al cambiar la venta activa (por click o scroll)
+  const prefetchNeighbors = React.useCallback((idx) => {
+    const neighbors = [idx - 1, idx + 1].filter(i => i >= 0 && i < displayedRows.length);
+    neighbors.forEach(i => {
+      const r = displayedRows[i];
+      const noVentaN = r?.ventas_noventa;
+      if (!noVentaN) return;
+      if (imagesByVentaRef.current[noVentaN] !== undefined) return; 
+      const skuN = r?.publicaciones_sku;
+      fetchImagenesOrden(noVentaN, skuN, { silent: true });      
+    });
+  }, [displayedRows]);
+
   React.useEffect(() => {
     if (loading || !activeId) return;
+    const idx = displayedRows.findIndex(r => r.id === activeId); 
     const activeRow = rows.find(r => r.id === activeId);
     const noVenta = activeRow?.ventas_noventa;
     const sku = activeRow?.publicaciones_sku;
     if (!noVenta) return;
-    if (imagesByVenta[noVenta]) return; // ya cacheado: no volver a pedir
-    fetchImagenesOrden(noVenta, sku);
-  }, [activeId, loading, rows, imagesByVenta]); 
+
+    if (imagesByVentaRef.current[noVenta] !== undefined) {
+      if (idx >= 0) prefetchNeighbors(idx);   
+    }
+    fetchImagenesOrden(noVenta, sku, { silent: false }); 
+
+    if (idx >= 0) prefetchNeighbors(idx);   
+  }, [activeId, loading, rows, displayedRows, prefetchNeighbors]); 
 
   return (
     <Box>
@@ -641,8 +645,8 @@ export default function DataGridMobile() {
 
 <Box sx={{ mt: 2 }}>
   <Box
-    ref={scrollerRef}                 // ✅ NUEVO
-    onScroll={handleScroll}           // ✅ NUEVO: detecta venta visible
+    ref={scrollerRef}
+    onScroll={handleScroll} 
     sx={{
       display: 'flex',
       overflowX: 'auto',
