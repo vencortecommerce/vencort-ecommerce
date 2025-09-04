@@ -40,10 +40,16 @@ export default function DataGridMobile() {
   const [targetVentaId, setTargetVentaId] = React.useState(null);
   const [assigning, setAssigning] = React.useState(false);
 
-
   // Imágenes
   const [imagesByVenta, setImagesByVenta] = React.useState({});
   const [loadingImagesVenta, setLoadingImagesVenta] = React.useState(null);
+
+  // ✅ NUEVO: refs para detectar la tarjeta visible y “throttlear” el scroll
+  const scrollerRef = React.useRef(null);
+  const scrollRafRef = React.useRef(null);
+
+  // ✅ NUEVO: control fino de concurrencia de fetch de imágenes
+  const imageReqIdRef = React.useRef(0);
 
   // ----- Visibilidad de columnas -----
   const columnVisibilityModel = React.useMemo(() => ({
@@ -397,13 +403,10 @@ export default function DataGridMobile() {
   
     // 1) Strings
     if (typeof value === 'string') {
-      // Si ya viene como URL o data URL
       if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) {
         return value;
       }
-      // Quita encabezado si viene incrustado y normaliza
       const b64 = value.replace(/^data:[^;]+;base64,/, '');
-      // Heurística de mime si no viene explícito
       const guess =
         mimeHint ||
         (b64.startsWith('/9j/') ? 'image/jpeg'
@@ -415,7 +418,6 @@ export default function DataGridMobile() {
       return `data:${guess};base64,${b64}`;
     }
   
-    // 2) Arrays o buffers
     const toU8 = (v) => {
       if (Array.isArray(v)) return new Uint8Array(v);
       if (v instanceof ArrayBuffer) return new Uint8Array(v);
@@ -429,7 +431,6 @@ export default function DataGridMobile() {
       return URL.createObjectURL(blob);
     }
   
-    // 3) Objetos con diferentes llaves
     if (typeof value === 'object') {
       const type = value.mimeType || value.mimetype || value.contentType || mimeHint;
       const payload =
@@ -440,13 +441,17 @@ export default function DataGridMobile() {
     return null;
   }
   
-  async function fetchImagenesOrden(noVenta,sku) {
+  // ⚙️ CAMBIO: ahora con control de concurrencia para no “apagar” el loader de otra venta
+  async function fetchImagenesOrden(noVenta, sku) {
     if (!noVenta) return;
-    try {
-      setLoadingImagesVenta(noVenta);
-  
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
 
+    // ✅ NUEVO: id de solicitud; la última siempre “manda”
+    const requestId = ++imageReqIdRef.current;
+
+    // mostrar loader para ESTA venta visible
+    setLoadingImagesVenta(noVenta);
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
       const config = {
         headers: {
           'Content-Type': 'application/json',
@@ -456,7 +461,7 @@ export default function DataGridMobile() {
 
       const  { data } = await clienteAxios.get(
         `/api/archivos/imagenesOrden?noVenta=${noVenta}&sku=${sku}`,
-        {},
+        {},              // se mantiene tu firma original
         config
       );
   
@@ -488,10 +493,10 @@ export default function DataGridMobile() {
       console.error('Error obteniendo imágenes de la orden:', err);
       setSnackbar({ open: true, message: 'No se pudieron cargar las imágenes del pedido', severity: 'error' });
     } finally {
-      setLoadingImagesVenta(null);
+      // ✅ NUEVO: solo la ÚLTIMA solicitud puede limpiar el loader de su misma venta
+      setLoadingImagesVenta(prev => (imageReqIdRef.current === requestId && prev === noVenta ? null : prev));
     }
   }
-  
 
   // Anchos fijos
   const LABEL_WIDTH = 128;
@@ -519,15 +524,35 @@ export default function DataGridMobile() {
     minWidth: 0,
   };
 
+  // ⚙️ CAMBIO: además de por click, la venta activa se actualiza por SCROLL (venta visible)
+  const handleScroll = React.useCallback(() => {
+    if (scrollRafRef.current) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
 
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      const { scrollLeft, clientWidth } = scroller;
+      if (!clientWidth) return;
+
+      const rawIndex = Math.round(scrollLeft / clientWidth);
+      const idx = Math.max(0, Math.min(displayedRows.length - 1, rawIndex));
+      const id = displayedRows[idx]?.id;
+      if (id && id !== activeId) {
+        setActiveId(id);
+      }
+    });
+  }, [displayedRows, activeId]);
+
+  // 🔁 Auto-carga de imágenes al cambiar la venta activa (por click o scroll)
   React.useEffect(() => {
     if (loading || !activeId) return;
     const activeRow = rows.find(r => r.id === activeId);
     const noVenta = activeRow?.ventas_noventa;
     const sku = activeRow?.publicaciones_sku;
     if (!noVenta) return;
-    if (imagesByVenta[noVenta]) return;
-    fetchImagenesOrden(noVenta,sku);
+    if (imagesByVenta[noVenta]) return; // ya cacheado: no volver a pedir
+    fetchImagenesOrden(noVenta, sku);
   }, [activeId, loading, rows, imagesByVenta]); 
 
   return (
@@ -616,6 +641,8 @@ export default function DataGridMobile() {
 
 <Box sx={{ mt: 2 }}>
   <Box
+    ref={scrollerRef}                 // ✅ NUEVO
+    onScroll={handleScroll}           // ✅ NUEVO: detecta venta visible
     sx={{
       display: 'flex',
       overflowX: 'auto',
@@ -625,7 +652,7 @@ export default function DataGridMobile() {
       '&::-webkit-scrollbar': { display: 'none' },
       msOverflowStyle: 'none',   
       scrollbarWidth: 'none',
-      width: '100vw',           
+      width: '100vw',
       maxWidth: '100vw',
     }}
   >
@@ -860,6 +887,7 @@ export default function DataGridMobile() {
                   );
                 })}
               </Stack>
+
               {/* ====== Productos (SKU / Imagen) — solo para la venta activa ====== */}
               {row.id === activeId && (
                 <Box sx={{ mt: 2 }}>
@@ -931,7 +959,7 @@ export default function DataGridMobile() {
                               </Typography>
 
                               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                              <Box
+                                <Box
                                   component="img"
                                   src={it.src}
                                   alt={`SKU ${it.sku}`}
@@ -953,7 +981,6 @@ export default function DataGridMobile() {
                                   loading="lazy"
                                   draggable={false}
                                 />
-
                               </Box>
                             </Box>
                           ))}
