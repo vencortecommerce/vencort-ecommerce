@@ -895,118 +895,115 @@ export default function DataGridMobile() {
 
              {/* ====== Productos (SKU / Imagen) — solo para la venta activa ====== */}
              {row.id === activeId && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                    Productos
-                  </Typography>
+  <Box sx={{ mt: 2 }}>
+    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+      Productos
+    </Typography>
 
-                  {(() => {
-                    // ✅ CAMBIO CACHE: priorizar SIEMPRE lo cacheado (incluye [] para "Sin imágenes").
-                    const cached = imagesByVenta[row.ventas_noventa];
+    {(() => {
+      const cached = imagesByVenta[row.ventas_noventa];
 
-                    if (cached !== undefined) {
-                      if (cached.length === 0) {
-                        return (
-                          <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                            Sin imágenes para esta venta.
-                          </Typography>
-                        );
-                      }
-                      // “Tabla” simple para móvil
-                      return (
-                        <Box
-                          sx={{
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {/* Header */}
-                          <Box
-                            sx={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr 96px',
-                              px: 1,
-                              py: 0.5,
-                              bgcolor: 'action.hover',
-                            }}
-                          >
-                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                              SKU
-                            </Typography>
-                            <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>
-                              Imagen
-                            </Typography>
-                          </Box>
+      if (cached !== undefined) {
+        if (cached.length === 0) {
+          return (
+            <Typography variant="body2" sx={{ opacity: 0.7 }}>
+              Sin imágenes para esta venta.
+            </Typography>
+          );
+        }
+        return (
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1,
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 96px',
+                px: 1,
+                py: 0.5,
+                bgcolor: 'action.hover',
+              }}
+            >
+              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                SKU
+              </Typography>
+              <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                Imagen
+              </Typography>
+            </Box>
 
-                          {/* Rows */}
-                          {cached.map((it, i) => (
-                            <Box
-                              key={`${it.sku}-${i}`}
-                              sx={{
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 96px',
-                                alignItems: 'center',
-                                px: 1,
-                                py: 0.75,
-                                borderTop: '1px solid',
-                                borderColor: 'divider',
-                              }}
-                            >
-                              <Typography variant="body2" sx={{ pr: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {it.sku}
-                              </Typography>
+            {/* Rows */}
+            {cached.map((it, i) => (
+              <Box
+                key={`${it.sku}-${i}`}
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 96px',
+                  alignItems: 'center',
+                  px: 1,
+                  py: 0.75,
+                  borderTop: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography variant="body2" sx={{ pr: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {it.sku}
+                </Typography>
 
-                              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                <Box
-                                  component="img"
-                                  src={it.src}
-                                  alt={`SKU ${it.sku}`}
-                                  onError={(e) => {
-                                    console.warn('No se pudo mostrar imagen para', it.sku, it.src);
-                                    e.currentTarget.src = '';
-                                    e.currentTarget.style.opacity = 0.3;
-                                    e.currentTarget.title = 'Imagen no disponible';
-                                  }}
-                                  sx={{
-                                    width: 64,
-                                    height: 64,
-                                    objectFit: 'contain',
-                                    borderRadius: 1,
-                                    border: '1px solid',
-                                    borderColor: 'divider',
-                                    bgcolor: 'background.paper',
-                                  }}
-                                  loading="lazy"
-                                  draggable={false}
-                                />
-                              </Box>
-                            </Box>
-                          ))}
-                        </Box>
-                      );
-                    }
-
-                    // ✅ CAMBIO CACHE: si aún NO hay caché, recién ahí mostramos loader (si aplica)
-                    if (loadingImagesVenta === row.ventas_noventa) {
-                      return (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
-                          <CircularProgress size={20} />
-                          <Typography variant="body2">Cargando imágenes...</Typography>
-                        </Box>
-                      );
-                    }
-
-                    // Estado inicial ultra breve (normalmente ni se ve porque el efecto dispara de inmediato)
-                    return (
-                      <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                        Cargando imágenes...
-                      </Typography>
-                    );
-                  })()}
+                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                  <Box
+                    component="img"
+                    src={it.src}
+                    alt={`SKU ${it.sku}`}
+                    onError={(e) => {
+                      console.warn('No se pudo mostrar imagen para', it.sku, it.src);
+                      e.currentTarget.src = '';
+                      e.currentTarget.style.opacity = 0.3;
+                      e.currentTarget.title = 'Imagen no disponible';
+                    }}
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      objectFit: 'contain',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      bgcolor: 'background.paper',
+                    }}
+                    loading="lazy"
+                    draggable={false}
+                  />
                 </Box>
-              )}
+              </Box>
+            ))}
+          </Box>
+        );
+      }
+
+      if (loadingImagesVenta === row.ventas_noventa) {
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+            <CircularProgress size={20} />
+            <Typography variant="body2">Cargando imágenes...</Typography>
+          </Box>
+        );
+      }
+
+      return (
+        <Typography variant="body2" sx={{ opacity: 0.7 }}>
+          Cargando imágenes...
+        </Typography>
+      );
+    })()}
+  </Box>
+)}
+
             </CardContent>
           </Card>
         );
