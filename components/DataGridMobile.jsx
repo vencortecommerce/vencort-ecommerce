@@ -441,54 +441,75 @@ export default function DataGridMobile() {
   
     return null;
   }
-  //Consulta de imagenes
-  async function fetchImagenesOrden(noVenta, sku, { silent = false } = {}) {
-    if (!noVenta) return;
 
-    if (imagesByVentaRef.current[noVenta] !== undefined) return; 
-    const requestId = !silent ? ++imageReqIdRef.current : imageReqIdRef.current; 
-    if (!silent) setLoadingImagesVenta(noVenta);                                 
-
+async function toStableSrc(payload, mimeHint, token) {
+  const maybe = toImageSrc(payload, mimeHint);
+  if (typeof maybe === 'string' && (maybe.startsWith('http://') || maybe.startsWith('https://'))) {
     try {
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      const config = {
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      };
+      const res = await fetch(maybe, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const blob = await res.blob();
+      const type = mimeHint || blob.type || 'image/jpeg';
+      return URL.createObjectURL(blob.type === type ? blob : new Blob([blob], { type }));
+    } catch {
+      return maybe;
+    }
+  }
+  return maybe;
+}
 
-      const { data } = await clienteAxios.get(
-        `/api/archivos/imagenesOrden?noVenta=${noVenta}&sku=${sku}`,
-        {},
-        config
-      );
 
-      const list = Array.isArray(data) ? data : (data?.items || data?.imagenes || data?.results || []);
-      const normalized = list.map((it, idx) => {
+  //Consulta de imagenes
+async function fetchImagenesOrden(noVenta, sku, { silent = false } = {}) {
+  if (!noVenta) return;
+
+  if (imagesByVentaRef.current[noVenta] !== undefined) return; 
+  const requestId = !silent ? ++imageReqIdRef.current : imageReqIdRef.current; 
+  if (!silent) setLoadingImagesVenta(noVenta);                                 
+
+  try {
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    const config = {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    };
+
+    const { data } = await clienteAxios.get(
+      `/api/archivos/imagenesOrden?noVenta=${noVenta}&sku=${sku}`,
+      {},
+      config
+    );
+
+    const list = Array.isArray(data) ? data : (data?.items || data?.imagenes || data?.results || []);
+    const normalized = (await Promise.all(
+      list.map(async (it, idx) => {
         const sku =
           it.sku ?? it.SKU ?? it.skuProducto ?? it.producto ?? it.codigo ?? it.id ?? `SKU_${idx + 1}`;
         const mime = it.mimeType || it.mimetype || it.contentType || it.tipo || undefined;
-        const src = toImageSrc(
-          it.url || it.href || it.imagen || it.image || it.foto || it.bytes || it.data || it.src,
-          mime
-        );
-        return src ? { sku, src } : null;
-      }).filter(Boolean);
+        const payload = it.url || it.href || it.imagen || it.image || it.foto || it.bytes || it.data || it.src;
 
-      setImagesByVenta(prev => (prev[noVenta] === undefined
-        ? { ...prev, [noVenta]: normalized }    // guarda imágenes o []
-        : prev));
-      
-      if (normalized.length === 0) {
-      }
-    } catch (err) {
-      console.error('Error obteniendo imágenes de la orden:', err);
-      setSnackbar({ open: true, message: 'No se pudieron cargar las imágenes del pedido', severity: 'error' });
-      setImagesByVenta(prev => (prev[noVenta] === undefined ? { ...prev, [noVenta]: [] } : prev));
-    } finally {
-      if (!silent) {
-        setLoadingImagesVenta(prev => (imageReqIdRef.current === requestId && prev === noVenta ? null : prev));
-      }
+        const stable = await toStableSrc(payload, mime, token); 
+        return stable ? { sku, src: stable } : null;
+      })
+    )).filter(Boolean);
+
+    setImagesByVenta(prev => (prev[noVenta] === undefined
+      ? { ...prev, [noVenta]: normalized }  
+      : prev));
+    
+    if (normalized.length === 0) {
+    }
+  } catch (err) {
+    console.error('Error obteniendo imágenes de la orden:', err);
+    setSnackbar({ open: true, message: 'No se pudieron cargar las imágenes del pedido', severity: 'error' });
+    setImagesByVenta(prev => (prev[noVenta] === undefined ? { ...prev, [noVenta]: [] } : prev));
+  } finally {
+    if (!silent) {
+      setLoadingImagesVenta(prev => (imageReqIdRef.current === requestId && prev === noVenta ? null : prev));
     }
   }
+}
+
   // Anchos fijos
   const LABEL_WIDTH = 128;
 
@@ -963,7 +984,6 @@ export default function DataGridMobile() {
                     alt={`SKU ${it.sku}`}
                     onError={(e) => {
                       console.warn('No se pudo mostrar imagen para', it.sku, it.src);
-                      e.currentTarget.src = '';
                       e.currentTarget.style.opacity = 0.3;
                       e.currentTarget.title = 'Imagen no disponible';
                     }}
