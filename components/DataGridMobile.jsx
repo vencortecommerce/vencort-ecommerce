@@ -515,7 +515,7 @@ export default function DataGridMobile() {
     minWidth: 0,
   };
 
-  // Scroll Inmediata
+  // Scroll Inmediata oara consulta de imagenes
   const handleScroll = React.useCallback(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
@@ -550,10 +550,11 @@ export default function DataGridMobile() {
     const noVenta = activeRow?.ventas_noventa;
     const sku = activeRow?.publicaciones_sku;
     if (!noVenta) return;
-
     if (imagesByVentaRef.current[noVenta] !== undefined) {
-      if (idx >= 0) prefetchNeighbors(idx);   
+      if (idx >= 0) prefetchNeighbors(idx);
+      return; 
     }
+
     fetchImagenesOrden(noVenta, sku, { silent: false }); 
 
     if (idx >= 0) prefetchNeighbors(idx);   
@@ -892,30 +893,25 @@ export default function DataGridMobile() {
                 })}
               </Stack>
 
-              {/* ====== Productos (SKU / Imagen) — solo para la venta activa ====== */}
-              {row.id === activeId && (
+             {/* ====== Productos (SKU / Imagen) — solo para la venta activa ====== */}
+             {row.id === activeId && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>
                     Productos
                   </Typography>
 
-                  {/* Loader mientras carga esa venta */}
-                  {loadingImagesVenta === row.ventas_noventa ? (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
-                      <CircularProgress size={20} />
-                      <Typography variant="body2">Cargando imágenes...</Typography>
-                    </Box>
-                  ) : (
-                    (() => {
-                      const items = imagesByVenta[row.ventas_noventa] || [];
-                      if (!items.length) {
+                  {(() => {
+                    // ✅ CAMBIO CACHE: priorizar SIEMPRE lo cacheado (incluye [] para "Sin imágenes").
+                    const cached = imagesByVenta[row.ventas_noventa];
+
+                    if (cached !== undefined) {
+                      if (cached.length === 0) {
                         return (
                           <Typography variant="body2" sx={{ opacity: 0.7 }}>
                             Sin imágenes para esta venta.
                           </Typography>
                         );
                       }
-
                       // “Tabla” simple para móvil
                       return (
                         <Box
@@ -945,7 +941,7 @@ export default function DataGridMobile() {
                           </Box>
 
                           {/* Rows */}
-                          {items.map((it, i) => (
+                          {cached.map((it, i) => (
                             <Box
                               key={`${it.sku}-${i}`}
                               sx={{
@@ -969,7 +965,7 @@ export default function DataGridMobile() {
                                   alt={`SKU ${it.sku}`}
                                   onError={(e) => {
                                     console.warn('No se pudo mostrar imagen para', it.sku, it.src);
-                                    e.currentTarget.src = ''; // evita ícono roto
+                                    e.currentTarget.src = '';
                                     e.currentTarget.style.opacity = 0.3;
                                     e.currentTarget.title = 'Imagen no disponible';
                                   }}
@@ -990,8 +986,25 @@ export default function DataGridMobile() {
                           ))}
                         </Box>
                       );
-                    })()
-                  )}
+                    }
+
+                    // ✅ CAMBIO CACHE: si aún NO hay caché, recién ahí mostramos loader (si aplica)
+                    if (loadingImagesVenta === row.ventas_noventa) {
+                      return (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+                          <CircularProgress size={20} />
+                          <Typography variant="body2">Cargando imágenes...</Typography>
+                        </Box>
+                      );
+                    }
+
+                    // Estado inicial ultra breve (normalmente ni se ve porque el efecto dispara de inmediato)
+                    return (
+                      <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                        Cargando imágenes...
+                      </Typography>
+                    );
+                  })()}
                 </Box>
               )}
             </CardContent>
