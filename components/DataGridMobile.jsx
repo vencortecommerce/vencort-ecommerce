@@ -52,6 +52,7 @@ export default function DataGridMobile() {
   // ----- Visibilidad de columnas -----
   const columnVisibilityModel = React.useMemo(() => ({
     origen:false,
+    ventas_estado:false,
     ventas_descripcionestado: false,
     ventas_ingresosproducto: false,
     ventas_ingresosenvio: false,
@@ -248,7 +249,7 @@ export default function DataGridMobile() {
       closeEmpacadorModal();
     }
   };  
-  function downloadEtiqueta(value, fileName = 'Etiqueta.pdf', mime = 'application/pdf') {
+  function download(value, fileName = 'Archivo.pdf', mime = 'application/pdf') {
     let blob;
   
     if (value instanceof Blob) {
@@ -267,7 +268,7 @@ export default function DataGridMobile() {
       const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
       blob = new Blob([bytes], { type: mime });
     } else {
-      console.warn('Formato de etiqueta no soportado:', typeof value, value);
+      console.warn('Formato de Archivo no soportado:', typeof value, value);
       return;
     }
   
@@ -905,6 +906,60 @@ async function toStableSrc(payload, mimeHint, token) {
                       </Box>
                     );
                   }
+
+                     // --- Campo: Detalle (boolean) ---
+                     if (col.field === 'detalle') {
+                      const hasDetalle = Boolean(row[col.field]);
+                      const fileName = `detalle_${row.ventas_noventa ?? 'documento'}.pdf`;
+          
+                      return (
+                        <Box key={col.field} sx={rowLineSx}>
+                          <Typography variant="body2" sx={labelSx}>
+                            {label}:
+                          </Typography>
+          
+                          {hasDetalle ? (
+                            <Button
+                              variant="outlined"
+                              color="secondary"
+                              size="small"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                try {
+                                  const noVenta = row?.ventas_noventa;
+                                  if (!noVenta) {
+                                    setSnackbar({ open: true, message: 'No. de venta inválido', severity: 'warning' });
+                                    return;
+                                  }
+                                  const token =
+                                    localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+          
+                                  const res = await clienteAxios.get('/api/archivos/detalle', {
+                                    params: { noVenta },
+                                    responseType: 'blob',
+                                    headers: {
+                                      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                                      Accept: 'application/pdf',
+                                    },
+                                  });
+          
+                                  download(res.data, fileName);
+                                } catch (err) {
+                                  console.error('Error descargando detalle:', err);
+                                  setSnackbar({ open: true, message: 'No se pudo descargar el detalle', severity: 'error' });
+                                }
+                              }}
+                            >
+                              Descargar
+                            </Button>
+                          ) : (
+                            <Typography variant="body2" sx={valueSx}>
+                              —
+                            </Typography>
+                          )}
+                        </Box>
+                      );
+                    }
         
                   // --- Default ---
                   return (
