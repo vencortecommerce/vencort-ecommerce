@@ -247,7 +247,7 @@ export function renderAvatar(params) {
     </Avatar>
   );
 }
-function downloadEtiqueta(value, fileName = 'Etiqueta.pdf', mime = 'application/pdf') {
+function download(value, fileName = 'Venta.pdf', mime = 'application/pdf') {
   let blob;
 
   if (value instanceof Blob) {
@@ -266,7 +266,7 @@ function downloadEtiqueta(value, fileName = 'Etiqueta.pdf', mime = 'application/
     const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
     blob = new Blob([bytes], { type: mime });
   } else {
-    console.warn('Formato de etiqueta no soportado:', typeof value, value);
+    console.warn('Formato de archivo no soportado:', typeof value, value);
     return;
   }
 
@@ -466,9 +466,52 @@ export const columns = [
             },
           });
   
-          downloadEtiqueta(res.data, fileName);
+          download(res.data, fileName);
         } catch (err) {
           console.error('Error descargando etiqueta:', err);
+        }
+      };
+  
+      return (
+        <Button variant="outlined" size="small" onClick={onClick}>
+          Descargar
+        </Button>
+      );
+    },
+  },
+  {
+    field: 'detalle',
+    headerName: 'Detalle',
+    flex: 0.5,
+    minWidth: 110,
+    sortable: false,
+    filterable: false,
+    renderCell: (params) => {
+      const hasDetalle = Boolean(params.value);
+      if (!hasDetalle) return '';
+  
+      const fileName = `detalle_${params.row?.ventas_noventa ?? 'documento'}.pdf`;
+  
+      const onClick = async (e) => {
+        e.stopPropagation();
+        try {
+          const noVenta = params.row?.ventas_noventa;
+          if (!noVenta) return;
+  
+          const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+  
+          const res = await clienteAxios.get('/api/archivos/detalle', {
+            params: { noVenta }, 
+            responseType: 'blob',
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              Accept: 'application/pdf',
+            },
+          });
+  
+          download(res.data, fileName);
+        } catch (err) {
+          console.error('Error descargando detalle:', err);
         }
       };
   
@@ -786,6 +829,7 @@ export const columnGroupingModel = [
       { field: 'empacador' },
       { field: 'estadoVenta' },
       { field: 'etiqueta' },
+      { field: 'detalle' },
       { field: 'ventas_descripcionestado' },
       { field: 'ventas_paquetevarios' },
       { field: 'ventas_unidades' },
