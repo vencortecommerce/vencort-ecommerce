@@ -194,8 +194,7 @@ export default function SaleActions() {
         </Card>
       ))}
     </Stack>
-
-
+    <br></br> 
     <Stack
         direction="row"
         justifyContent="space-between"
@@ -204,7 +203,7 @@ export default function SaleActions() {
         sx={{ mb: 2 }}
       >
 
-
+                  
         <Button
           variant="outlined"
           startIcon={<FileDownloadIcon />}

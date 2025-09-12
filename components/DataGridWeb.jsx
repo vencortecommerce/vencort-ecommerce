@@ -225,6 +225,7 @@ export default function DataGridWeb() {
         density="compact"
         loading={loading}
         filterModel={filterModel}
+        onFilterModelChange={(newModel) => setFilterModel(newModel)}
         isRowSelectable={(params) => !(params.row.surtidor && params.row.empacador)}
         onRowSelectionModelChange={(ids) => { 
           setSelectedIds(ids); }}
