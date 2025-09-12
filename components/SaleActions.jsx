@@ -13,8 +13,6 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ClearIcon from '@mui/icons-material/Clear';
 import clienteAxios from '../src/context/Config';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
-import { BarChart } from '@mui/x-charts/BarChart';
 
 export default function SaleActions() {
   const fileInputRef = useRef(null);
