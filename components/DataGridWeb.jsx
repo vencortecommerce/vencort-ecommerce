@@ -39,7 +39,7 @@ export default function DataGridWeb() {
             },
         };
         try {
-            const response = await clienteAxios.get('/api/ventas/consulta', config);
+            const response = await clienteAxios.get('/api/ventas/consultaMobile', config);
             const dataWithId = response.data.map((item) => ({
             id: item.idmercadolibre,
             ...item,
