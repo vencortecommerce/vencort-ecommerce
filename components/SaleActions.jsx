@@ -138,7 +138,7 @@ export default function SaleActions() {
       );
   
       const arr = Array.isArray(response.data) ? response.data : [];
-      const estadosValidos = ['CANCELADO','DEMORADO','TARDÍO','EMPACADO','EMBARCADO'];
+      const estadosValidos = ['POR SURTIR','CANCELADO','DEMORADO','TARDÍO','EMPACADO','SURTIDO','EMBARCADO'];
   
       const completados = estadosValidos.map((estado) => {
         const existente = arr.find(item => item.estado === estado);
@@ -192,6 +192,10 @@ export default function SaleActions() {
                       : item.estado === 'TARDÍO'
                       ? 'warning'
                       : item.estado === 'EMPACADO'
+                      ? 'info'
+                      : item.estado === 'SURTIDO'
+                      ? 'info'
+                      : item.estado === 'POR SURTIR'
                       ? 'info'
                       : 'warning'
                   }
