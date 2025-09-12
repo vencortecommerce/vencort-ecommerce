@@ -138,10 +138,14 @@ export default function SaleActions() {
       );
   
       const arr = Array.isArray(response.data) ? response.data : [];
-      const estadosValidos = ['CANCELADO', 'DEMORADO', 'TARDÍO'];
-      const filtrados = arr.filter(item => estadosValidos.includes(item.estado));
+      const estadosValidos = ['CANCELADO','DEMORADO','TARDÍO','EMPACADO','EMBARCADO'];
   
-      setSubtotales(filtrados);
+      const completados = estadosValidos.map((estado) => {
+        const existente = arr.find(item => item.estado === estado);
+        return existente ?? { estado, total: 0, porcentaje: 0, origen: '' };
+      });
+  
+      setSubtotales(completados);
     } catch (error) {
       console.error('Error al obtener estadísticas:', error);
       setErrorMsg('No se pudieron cargar los datos del reporte. Intenta de nuevo.');
@@ -150,6 +154,7 @@ export default function SaleActions() {
       setLoading(false);
     }
   }, []);
+  
   
   React.useEffect(() => {
     fetchData();
@@ -183,6 +188,10 @@ export default function SaleActions() {
                     item.estado === 'CANCELADO'
                       ? 'error'
                       : item.estado === 'DEMORADO'
+                      ? 'error'
+                      : item.estado === 'TARDÍO'
+                      ? 'warning'
+                      : item.estado === 'EMPACADO'
                       ? 'info'
                       : 'warning'
                   }
