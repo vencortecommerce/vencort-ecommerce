@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
@@ -6,7 +6,8 @@ import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import { useEmpacadoresActivos } from '../../components/useEmpacadores';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  FormControl, InputLabel, Select, MenuItem, Button, Snackbar, Alert
+  FormControl, InputLabel, Select, MenuItem, Button, Snackbar, Alert,
+  Box, CircularProgress
 } from '@mui/material';
 import clienteAxios from '../../src/context/Config';
 import { Link } from 'react-router-dom';
@@ -280,12 +281,214 @@ function download(value, fileName = 'Venta.pdf', mime = 'application/pdf') {
   URL.revokeObjectURL(url);
 }
 
+const imageCache = new Map();   // noVenta -> [{ sku, src }, ...]
+const inFlight = new Map();     // noVenta -> Promise
+
+//Celda para Imagenes
+function toImageSrc(value, mimeHint) {
+  if (!value) return null;
+
+  if (typeof value === 'string') {
+    if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) {
+      return value;
+    }
+    const b64 = value.replace(/^data:[^;]+;base64,/, '');
+    const guess =
+      mimeHint ||
+      (b64.startsWith('/9j/') ? 'image/jpeg'
+        : b64.startsWith('iVBOR') ? 'image/png'
+        : b64.startsWith('R0lGOD') ? 'image/gif'
+        : b64.startsWith('UklGR') ? 'image/webp'
+        : 'image/jpeg');
+    return `data:${guess};base64,${b64}`;
+  }
+
+  const toU8 = (v) => {
+    if (Array.isArray(v)) return new Uint8Array(v);
+    if (v instanceof ArrayBuffer) return new Uint8Array(v);
+    if (ArrayBuffer.isView(v)) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
+    return null;
+  };
+  const u8 = toU8(value);
+  if (u8) {
+    const type = mimeHint || 'image/jpeg';
+    const blob = new Blob([u8], { type });
+    return URL.createObjectURL(blob);
+  }
+
+  if (typeof value === 'object') {
+    const type = value.mimeType || value.mimetype || value.contentType || mimeHint;
+    const payload =
+      value.url || value.href || value.imagen || value.image || value.foto || value.bytes || value.data || value.src;
+    return toImageSrc(payload, type);
+  }
+
+  return null;
+}
+//Celda para Imagenes
+function ImagenOrdenCell({ row }) {
+  const noVenta = row?.ventas_noventa;
+  const sku = row?.publicaciones_sku;
+  const [status, setStatus] = useState(row.__imagenesEstado || 'idle'); // idle | loading | ok | empty
+  const [items, setItems] = useState(row.__imagenesOrden || []);
+  const reqIdRef = useRef(0);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchImagenesOrden(noVentaParam, skuParam, { silent = false } = {}) {
+      if (!noVentaParam) return;
+
+      // Evitar re-llamadas si ya está resuelto
+      if (row.__imagenesEstado === 'ok' || row.__imagenesEstado === 'empty') {
+        setStatus(row.__imagenesEstado);
+        setItems(row.__imagenesOrden || []);
+        return;
+      }
+
+      // Cache hit
+      if (imageCache.has(noVentaParam)) {
+        const cached = imageCache.get(noVentaParam);
+        row.__imagenesOrden = cached;
+        row.__imagenesEstado = cached.length ? 'ok' : 'empty';
+        if (mounted) {
+          setItems(cached);
+          setStatus(row.__imagenesEstado);
+        }
+        return;
+      }
+
+      // Si hay petición en curso para este noVenta, esperar esa misma
+      if (inFlight.has(noVentaParam)) {
+        try {
+          await inFlight.get(noVentaParam);
+        } catch {
+          // Ignorar, caerá al estado empty más abajo
+        }
+        if (!mounted) return;
+        const cached = imageCache.get(noVentaParam) || [];
+        row.__imagenesOrden = cached;
+        row.__imagenesEstado = cached.length ? 'ok' : 'empty';
+        setItems(cached);
+        setStatus(row.__imagenesEstado);
+        return;
+      }
+
+      const requestId = !silent ? ++reqIdRef.current : reqIdRef.current;
+      if (!silent) setStatus('loading');
+
+      try {
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const p = clienteAxios.get('/api/archivos/imagenesOrden', {
+          params: { noVenta: noVentaParam, sku: skuParam },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          responseType: 'json',
+        });
+
+        inFlight.set(noVentaParam, p);
+        const { data } = await p;
+        inFlight.delete(noVentaParam);
+
+        const list = Array.isArray(data) ? data : (data?.items || data?.imagenes || data?.results || []);
+        const normalized = list
+          .map((it, idx) => {
+            const skuLocal =
+              it.sku ?? it.SKU ?? it.skuProducto ?? it.producto ?? it.codigo ?? it.id ?? `SKU_${idx + 1}`;
+            const mime = it.mimeType || it.mimetype || it.contentType || it.tipo || undefined;
+            const payload = it.url || it.href || it.imagen || it.image || it.foto || it.bytes || it.data || it.src;
+            const src = toImageSrc(payload, mime);
+            return src ? { sku: skuLocal, src } : null;
+          })
+          .filter(Boolean);
+
+        imageCache.set(noVentaParam, normalized);
+
+        if (!mounted) return;
+        row.__imagenesOrden = normalized;
+        row.__imagenesEstado = normalized.length ? 'ok' : 'empty';
+        setItems(normalized);
+        setStatus(row.__imagenesEstado);
+      } catch (err) {
+        console.error('Error obteniendo imágenes de la orden:', err);
+        if (!mounted) return;
+        imageCache.set(noVentaParam, []);
+        row.__imagenesOrden = [];
+        row.__imagenesEstado = 'empty';
+        setItems([]);
+        setStatus('empty');
+      } finally {
+        if (!silent) {
+          // validar condición de última petición
+          if (reqIdRef.current !== requestId) return;
+        }
+      }
+    }
+
+    if (noVenta && status === 'idle') {
+      fetchImagenesOrden(noVenta, sku);
+    }
+
+    return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noVenta, sku]); // reintenta si cambia la fila
+
+  if (!noVenta) return '';
+
+  if (status === 'loading') {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56 }}>
+        <CircularProgress size={18} />
+      </Box>
+    );
+  }
+
+  if (status === 'empty' || !items.length) {
+    return (
+      <Box sx={{ fontSize: 12, opacity: 0.7, textAlign: 'center', width: 72 }}>
+        Sin imagen
+      </Box>
+    );
+  }
+
+  const first = items[0];
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 72, height: 56 }}>
+      <img
+        src={first.src}
+        alt={`SKU ${first.sku}`}
+        loading="lazy"
+        decoding="async"
+        style={{
+          width: 48,
+          height: 48,
+          objectFit: 'contain',
+          borderRadius: 6,
+          border: '1px solid rgba(0,0,0,0.12)',
+          background: '#fff'
+        }}
+        onError={(e) => {
+          e.currentTarget.src = '';
+          e.currentTarget.style.opacity = 0.3;
+          e.currentTarget.title = 'Imagen no disponible';
+        }}
+        draggable={false}
+      />
+    </Box>
+  );
+}
+
 export const columns = [
   {
     field: '',
     headerName: 'Imag',
     flex: 0.5,
-    minWidth: 10,
+    minWidth: 100,
+    sortable: false,
+    filterable: false,
+    renderCell: (params) => <ImagenOrdenCell row={params.row} />,
   },
   {
     field: 'publicaciones_titulopublicacion',
