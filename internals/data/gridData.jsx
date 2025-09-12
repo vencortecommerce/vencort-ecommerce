@@ -342,13 +342,13 @@ export const columns = [
     field: 'ventas_fechaventa',
     headerName: 'Fecha Venta',
     flex: 0.5,
-    minWidth: 150,
+    minWidth: 145,
   },
   {
     field: 'ventas_estado',
     headerName: 'Ventas Estado',
     flex: 0.5,
-    minWidth: 200,
+    minWidth: 150,
     renderCell: (params) => {
       const isCancelada = (params.value || '').toLowerCase().includes('venta cancelada');
       const hasEmpacador = params.row?.empacador != null && params.row.empacador !== '';
@@ -376,21 +376,21 @@ export const columns = [
     field: 'surtidor',
     headerName: 'Surtidor',
     flex: 0.5,
-    minWidth: 150,
+    minWidth: 120,
     renderCell: (params) => <SurtidorCell row={params.row} />
   },
   {
     field: 'empacador',
     headerName: 'Empacador',
     flex: 0.5,
-    minWidth: 150,
+    minWidth: 120,
     renderCell: (params) => <EmpacadorCell row={params.row} />
   },
   {
     field: 'estadoVenta',
     headerName: 'Estado',
     flex: 0.5,
-    minWidth: 125,
+    minWidth: 200,
     renderCell: (params) => {
       const estado = params.value ?? '';
       let color = 'default';
@@ -398,34 +398,74 @@ export const columns = [
       let bgColor = '#e0e0e0';
   
       switch (estado.toUpperCase()) {
-        case 'POR SURTIR':
+        case 'DEMORADO':
           color = 'warning';
           bgColor = '#fff3cd'; 
           textColor = '#856404';
           break;
-        case 'EMPACADO':
+        case 'TARDÍO':
+            color = 'warning';
+            bgColor = '#FFBE85'; 
+            textColor = '#856404';
+            break;
+        case 'CANCELADO':
+            color = 'warning';
+            bgColor = '#FF907D'; 
+            textColor = '#000000';
+            break;
+        case 'POR SURTIR':
+          color = 'info';
+          bgColor = '#d1ecf1';
+          textColor = '#0c5460';
+          break;
+        case 'POR SURTIR':
           color = 'info';
           bgColor = '#d1ecf1';
           textColor = '#0c5460';
           break;
         case 'SURTIDO':
+          color = 'info';
+          bgColor = '#d1ecf1';
+          textColor = '#0c5460';
+          break;     
+        case 'EMPACADO':
+          color = 'info';
+          bgColor = '#d1ecf1';
+          textColor = '#0c5460';
+          break;
+        case 'TARDÍO-EMBARCADO':
           color = 'success';
           bgColor = '#d4edda'; 
           textColor = '#155724';
           break;
+        case 'DEMORADO-EMBARCADO':
+          color = 'success';
+          bgColor = '#d4edda'; 
+          textColor = '#155724';
+          break;     
+        case 'EMBARCADO':
+          color = 'success';
+          bgColor = '#d4edda'; 
+          textColor = '#155724';
+          break;      
         default:
-          bgColor = '#f8f9fa';
-          textColor = '#6c757d';
+          color = 'success';
+          bgColor = '#d4edda'; 
+          textColor = '#155724';
           break;
       }
   
       return (
         <div
           style={{
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+            lineHeight: '1.2',
+            padding: '4px 8px',
             backgroundColor: bgColor,
             color: textColor,
             fontWeight: 'bold',
-            padding: '4px 8px',
             borderRadius: '8px',
             textAlign: 'center',
             width: '100%',
@@ -524,18 +564,18 @@ export const columns = [
   },
   {
     field: 'ventas_paquetevarios',
-    headerName: 'Paquete Varios Productos',
+    headerName: 'Paquete',
     flex: 0.5,
-    minWidth: 80,
+    minWidth: 60,
     renderCell: (params) => renderStatus(params.value),
   },
   {
     field: 'ventas_unidades',
     headerName: 'Unidades',
-    headerAlign: 'right',
-    align: 'right',
+    headerAlign: 'left',
+    align: 'rileftght',
     flex: 1,
-    minWidth: 80,
+    minWidth: 40,
     renderCell: (params) => {
       const valor = params.value ?? 0;
       return (
