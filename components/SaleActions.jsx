@@ -6,13 +6,15 @@ import {
   Typography,
   IconButton,
   Snackbar,
-  Alert,
+  Alert, CardContent, Card, Chip
 } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import ClearIcon from '@mui/icons-material/Clear';
 import clienteAxios from '../src/context/Config';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
+import { BarChart } from '@mui/x-charts/BarChart';
 
 export default function SaleActions() {
   const fileInputRef = useRef(null);
@@ -26,7 +28,7 @@ export default function SaleActions() {
   });
   const navigate = useNavigate();
   const handleDownloadTemplate = async () => {
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+  const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
 
     try {
       const response = await clienteAxios.get('/api/ventas/plantilla', {
@@ -116,16 +118,95 @@ export default function SaleActions() {
       fileInputRef.current.value = null;
     }
   };
+  const [subtotales, setSubtotales] = React.useState([]);
+  const [errorMsg, setErrorMsg] = React.useState('');
+
+  const fetchData = React.useCallback(async () => {
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      };
+  
+      const response = await clienteAxios.post(
+        `/api/reportes/subTotales`,
+        {},
+        config
+      );
+  
+      const arr = Array.isArray(response.data) ? response.data : [];
+      const estadosValidos = ['CANCELADO', 'DEMORADO', 'TARDÍO'];
+      const filtrados = arr.filter(item => estadosValidos.includes(item.estado));
+  
+      setSubtotales(filtrados);
+    } catch (error) {
+      console.error('Error al obtener estadísticas:', error);
+      setErrorMsg('No se pudieron cargar los datos del reporte. Intenta de nuevo.');
+      setSubtotales([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Stack
+     
+     <Stack direction="row" spacing={2}>
+      {subtotales.map((item) => (
+        <Card key={item.estado} sx={{ minWidth: 180 }}>
+          <CardContent>
+            <Typography component="h2" variant="subtitle2" gutterBottom>
+              {item.estado}
+            </Typography>
+            <Stack sx={{ justifyContent: 'space-between' }}>
+              <Stack
+                direction="row"
+                sx={{
+                  alignContent: { xs: 'center', sm: 'flex-start' },
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                <Typography variant="h4" component="p">
+                  {item.total}
+                </Typography>
+                <Chip
+                  size="small"
+                  color={
+                    item.estado === 'CANCELADO'
+                      ? 'error'
+                      : item.estado === 'DEMORADO'
+                      ? 'info'
+                      : 'warning'
+                  }
+                  label={`${item.porcentaje}%`}
+                />
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+      ))}
+    </Stack>
+
+
+    <Stack
         direction="row"
         justifyContent="space-between"
         alignItems="flex-start"
         spacing={2}
         sx={{ mb: 2 }}
       >
+
+
         <Button
           variant="outlined"
           startIcon={<FileDownloadIcon />}
