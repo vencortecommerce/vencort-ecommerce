@@ -5,7 +5,7 @@ import { Box, Button, Snackbar, Alert,
   Dialog, DialogTitle, DialogContent, DialogActions,
   CircularProgress
 } from '@mui/material';
-import { columns } from '../internals/data/gridData';
+import { columns } from '../internals/data/gridDataMobile';
 import clienteAxios from '../src/context/Config';
 import { useNavigate } from 'react-router-dom';
 import { ButtonBase } from '@mui/material';
@@ -132,7 +132,7 @@ export default function DataGridMobile() {
       },
     };
     try {
-      const response = await clienteAxios.get('/api/ventas/consulta', config);
+      const response = await clienteAxios.get('/api/ventas/consultaMobile', config);
       const dataWithId = response.data.map((item) => ({
         id: item.idmercadolibre,
         ...item,

@@ -282,6 +282,12 @@ function download(value, fileName = 'Venta.pdf', mime = 'application/pdf') {
 
 export const columns = [
   {
+    field: '',
+    headerName: 'Imag',
+    flex: 0.5,
+    minWidth: 10,
+  },
+  {
     field: 'publicaciones_titulopublicacion',
     headerName: 'Título de la publicación',
     flex: 2,
@@ -861,7 +867,6 @@ export const columnGroupingModel = [
     groupId: 'ventas',
     headerName: 'Ventas',
     children: [
-      { field: 'ventas_noventa' },
       { field: 'origen' },
       { field: 'ventas_fechaventa' },
       { field: 'ventas_estado' },
