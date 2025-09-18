@@ -165,16 +165,7 @@ export default function SignIn() {
                 error={passwordError}
                 helperText={passwordErrorMessage}
               />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={remember}
-                    color="primary"
-                    onChange={() => setRemember(!remember)}
-                  />
-                }
-                label="Recordarme"
-              />
+              
               <Button
                 type="submit"
                 fullWidth

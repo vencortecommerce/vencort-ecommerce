@@ -21,7 +21,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import clienteAxios from '../src/context/Config';
 import { useNavigate } from 'react-router-dom';
 
-export default function Productos() {
+export default function ProductosMenosVendidos() {
   const [fechaInicial, setFechaInicial] = React.useState(null);
   const [fechaFinal, setFechaFinal] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
@@ -41,7 +41,7 @@ export default function Productos() {
       };
 
       const response = await clienteAxios.post(
-        `/api/reportes/productosMas?fechaInicial=${fInicial}&fechaFinal=${fFinal}`,
+        `/api/reportes/productosMenos?fechaInicial=${fInicial}&fechaFinal=${fFinal}`,
         {},
         config
       );
@@ -51,7 +51,7 @@ export default function Productos() {
       if (error?.response?.status === 401) {
         navigate('/');
       }else{
-        console.error('Error al consultar los productos más vendidos:', error);
+        console.error('Error al consultar los productos menos vendidos:', error);
       }
     } finally {
       setLoading(false);
@@ -82,7 +82,7 @@ export default function Productos() {
   return (
     <Card variant="outlined" sx={{ width: '100%' }}>
       <CardContent>
-        <Title>Productos más Vendidos</Title>
+        <Title>Productos menos Vendidos</Title>
 
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <Stack direction="row" spacing={2} sx={{ mb: 3 }}>

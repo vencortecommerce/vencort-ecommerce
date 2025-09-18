@@ -16,6 +16,7 @@ const mainListItems = [
   { text: 'Inicio', icon: <HomeRoundedIcon />, path: '/dashboard' },
   { text: 'Formularío Venta', icon: <ReceiptLongIcon />, path: '/formulario-venta' },
   { text: 'Estadísticas', icon: <AnalyticsRoundedIcon />, path: '/estadisticas' },
+  { text: 'Reportes', icon: <ReceiptLongIcon />, path: '/reportes' },
   { text: 'Registro de Usuario', icon: <PersonAddIcon />, path: '/registro-usuario' },
   { text: 'Registro de Empacadores', icon: <PersonAddIcon />, path: '/registro-empacadores' },
   { text: 'Alertas', icon: <NotificationsActiveRoundedIcon />, path: '/alertas' },

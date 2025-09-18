@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack';
 import AppNavbar from '../components/AppNavbar';
 import MainGrid from '../components/MainGrid';
 import MainGridEstadistics from '../components/MainGridEstadistics'; 
+import MainGridReports from '../components/MainGridReports'; 
 import MainGridUserRegister from '../components/MainGridUserRegister'; 
 import MainGridPackerRegister from '../components/MainGridPackerRegister'; 
 import MainGridSale from '../components/MainGridSale'; 
@@ -67,6 +68,7 @@ export default function Dashboard(props) {
             {selectedPage === 'Inicio' && <MainGrid />}
             {selectedPage === 'Formularío Venta' && <MainGridSale/>}
             {selectedPage === 'Estadísticas' && <MainGridEstadistics />}
+            {selectedPage === 'Reportes' && <MainGridReports />}
             {selectedPage === 'Registro de Usuario' && <MainGridUserRegister/>}
             {selectedPage === 'Registro de Empacadores' && <MainGridPackerRegister/>}
             {selectedPage === 'Alertas' && <MainGridAlerts/>}

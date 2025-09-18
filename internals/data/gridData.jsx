@@ -599,7 +599,7 @@ export const columns = [
     field: 'estadoVenta',
     headerName: 'Estado',
     flex: 0.5,
-    minWidth: 200,
+    minWidth: 150,
     renderCell: (params) => {
       const estado = params.value ?? '';
       let color = 'default';
@@ -689,7 +689,7 @@ export const columns = [
     field: 'etiqueta',
     headerName: 'Etiqueta',
     flex: 0.5,
-    minWidth: 110,
+    minWidth: 100,
     sortable: false,
     filterable: false,
     renderCell: (params) => {
@@ -732,7 +732,7 @@ export const columns = [
     field: 'detalle',
     headerName: 'Detalle',
     flex: 0.5,
-    minWidth: 110,
+    minWidth: 100,
     sortable: false,
     filterable: false,
     renderCell: (params) => {
@@ -777,6 +777,12 @@ export const columns = [
     flex: 0.5,
     minWidth: 60,
     renderCell: (params) => renderStatus(params.value),
+  },
+  {
+    field: 'inventario',
+    headerName: 'Inventario',
+    flex: 0.5,
+    minWidth: 90,
   },
   {
     field: 'ventas_unidades',
@@ -1080,6 +1086,7 @@ export const columnGroupingModel = [
       { field: 'detalle' },
       { field: 'ventas_descripcionestado' },
       { field: 'ventas_paquetevarios' },
+      { field: 'inventario' },
       { field: 'ventas_unidades' },
       { field: 'ventas_ingresosproducto' },
       { field: 'ventas_ingresosenvio' },

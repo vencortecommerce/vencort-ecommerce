@@ -20,43 +20,48 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import clienteAxios from '../src/context/Config';
 import { useNavigate } from 'react-router-dom';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
-export default function Productos() {
+export default function FileProductos() {
   const [fechaInicial, setFechaInicial] = React.useState(null);
   const [fechaFinal, setFechaFinal] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const [rows, setRows] = React.useState([]);
   const navigate = useNavigate();
+
   const formatDate = (date) => date.toISOString().split('T')[0]; // YYYY-MM-DD
 
-  const fetchTotales = async (fInicial, fFinal) => {
+  const handleDownloadTemplate = async (fInicial, fFinal) => {
+
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     setLoading(true);
-    try {
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      };
-
-      const response = await clienteAxios.post(
-        `/api/reportes/productosMas?fechaInicial=${fInicial}&fechaFinal=${fFinal}`,
-        {},
-        config
-      );
-
-      setRows(response.data);
-    } catch (error) {
-      if (error?.response?.status === 401) {
-        navigate('/');
-      }else{
-        console.error('Error al consultar los productos más vendidos:', error);
+      try {
+        const response = await clienteAxios.get(`/api/archivos/productos?fechaInicial=${fInicial}&fechaFinal=${fFinal}`, {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'productos.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (error) {
+        if (error?.response?.status === 401) {
+          navigate('/');
+        }else{
+          console.error('Error descargando el reporte:', error);
+          alert('No se pudo descargar el reporte. Intenta más tarde.');
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
 
   React.useEffect(() => {
     const today = new Date();
@@ -65,8 +70,6 @@ export default function Productos() {
 
     setFechaInicial(oneMonthAgo);
     setFechaFinal(today);
-
-    fetchTotales(formatDate(oneMonthAgo), formatDate(today));
   }, []);
 
   const handleBuscar = () => {
@@ -76,13 +79,13 @@ export default function Productos() {
     }
     const fInicial = formatDate(fechaInicial);
     const fFinal = formatDate(fechaFinal);
-    fetchTotales(fInicial, fFinal);
+    handleDownloadTemplate(fInicial, fFinal);
   };
 
   return (
     <Card variant="outlined" sx={{ width: '100%' }}>
       <CardContent>
-        <Title>Productos más Vendidos</Title>
+        <Title>Total de Productos</Title>
 
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
@@ -98,8 +101,13 @@ export default function Productos() {
               onChange={(newValue) => setFechaFinal(newValue)}
               slotProps={{ textField: { fullWidth: true } }}
             />
-            <Button variant="contained" color="primary" onClick={handleBuscar}>
-              Buscar
+
+            <Button
+              variant="outlined" color="primary"
+              startIcon={<FileDownloadIcon />}
+              onClick={handleBuscar}
+            >
+              Descargar
             </Button>
           </Stack>
         </LocalizationProvider>
@@ -110,29 +118,6 @@ export default function Productos() {
           </Box>
         ) : (
           <>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>SKU</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Unidades</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Origen</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{row.sku}</TableCell>
-                    <TableCell>{row.unidades}</TableCell>
-                    <TableCell>${row.total?.toFixed(2)}</TableCell>
-                    <TableCell>{row.origen}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <Box sx={{ mt: 3 }}>
-             
-            </Box>
           </>
         )}
       </CardContent>

@@ -12,6 +12,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/formulario-venta" element={<Dashboard initialPage="Formularío Venta" />} />
           <Route path="/estadisticas" element={<Dashboard initialPage="Estadísticas" />} />
+          <Route path="/reportes" element={<Dashboard initialPage="Reportes" />} />
           <Route path="/registro-usuario" element={<Dashboard initialPage="Registro de Usuario" />} />
           <Route path="/registro-empacadores" element={<Dashboard initialPage="Registro de Empacadores" />} />
           <Route path="/alertas" element={<Dashboard initialPage="Alertas" />} />
