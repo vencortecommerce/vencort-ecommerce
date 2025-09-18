@@ -695,7 +695,8 @@ export const columns = [
     renderCell: (params) => {
       const hasEtiqueta = Boolean(params.value);
       if (!hasEtiqueta) return '';
-  
+      const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
+      const [errorMessage, setErrorMessage] = useState('');
       const fileName = `etiqueta_${params.row?.ventas_noventa ?? 'documento'}.pdf`;
   
       const onClick = async (e) => {
@@ -717,14 +718,29 @@ export const columns = [
   
           download(res.data, fileName);
         } catch (err) {
-          console.error('Error descargando etiqueta:', err);
+          setErrorMessage('Etiqueta no disponible, contacta a tú Administrador.');
+          setShowErrorSnackbar(true);
         }
       };
   
-      return (
+      return (<>
         <Button variant="outlined" size="small" onClick={onClick}>
           Descargar
         </Button>
+        <Snackbar
+          open={showErrorSnackbar}
+          autoHideDuration={4000}
+          onClose={() => setShowErrorSnackbar(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setShowErrorSnackbar(false)}
+            severity="error"
+            sx={{ width: '100%' }}
+          >
+            {errorMessage}
+          </Alert>
+        </Snackbar></>
       );
     },
   },
@@ -738,7 +754,8 @@ export const columns = [
     renderCell: (params) => {
       const hasDetalle = Boolean(params.value);
       if (!hasDetalle) return '';
-  
+      const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
+      const [errorMessage, setErrorMessage] = useState('');
       const fileName = `detalle_${params.row?.ventas_noventa ?? 'documento'}.pdf`;
   
       const onClick = async (e) => {
@@ -760,14 +777,28 @@ export const columns = [
   
           download(res.data, fileName);
         } catch (err) {
-          console.error('Error descargando detalle:', err);
+          setErrorMessage('Detalle no disponible, contacta a tú Administrador.');
+          setShowErrorSnackbar(true);
         }
       };
   
-      return (
+      return (<>
         <Button variant="outlined" size="small" onClick={onClick}>
           Descargar
-        </Button>
+        </Button><Snackbar
+          open={showErrorSnackbar}
+          autoHideDuration={4000}
+          onClose={() => setShowErrorSnackbar(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setShowErrorSnackbar(false)}
+            severity="error"
+            sx={{ width: '100%' }}
+          >
+            {errorMessage}
+          </Alert>
+        </Snackbar></>
       );
     },
   },

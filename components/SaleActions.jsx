@@ -98,12 +98,15 @@ export default function SaleActions() {
         fileInputRef.current.value = null;
       }
     } catch (error) {
-      console.error('Error subiendo archivo:', error);
       setSnackbar({
         open: true,
-        message: 'Error al cargar el archivo. Intenta más tarde.',
+        message: `Error al cargar el archivo. ${error?.response?.data?.error || 'Error desconocido'}`,
         severity: 'error',
       });
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
     } finally {
       setLoading(false);
     }
