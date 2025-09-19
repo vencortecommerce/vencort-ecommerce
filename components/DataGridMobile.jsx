@@ -224,7 +224,7 @@ export default function DataGridMobile() {
   
       const queryParams = [
         `idempacador=${encodeURIComponent(parseInt(selectedEmp, 10))}`,
-        `idmercadolibre=${encodeURIComponent(targetVentaId)}`
+        `noVenta=${encodeURIComponent(targetVentaId)}`
       ].join('&');
   
       await clienteAxios.post(`/api/empacador/asignarEmpacador?${queryParams}`, {}, config);
@@ -389,7 +389,7 @@ export default function DataGridMobile() {
           Authorization: `Bearer ${token}`,
         },
       };
-      const queryParams = `idmercadolibre=${encodeURIComponent(id)}`;
+      const queryParams = `noVenta=${encodeURIComponent(id)}`;
       await clienteAxios.post(`/api/ventas/asignarSurtidor?${queryParams}`, {}, config);
 
       const sessionName = getSessionUserName() ?? 'Asignado';
