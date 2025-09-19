@@ -5,7 +5,7 @@ import { columns, columnGroupingModel } from '../internals/data/gridData';
 import clienteAxios from '../src/context/Config';
 import {
   Select, MenuItem, InputLabel, FormControl,
-  TextField, FormControlLabel, Checkbox
+  TextField, FormControlLabel, Checkbox, Stack
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -201,102 +201,114 @@ export default function DataGridWeb() {
       }
 
     return (
-        <Box ><br/>
-        <FormControl sx={{ minWidth: 180 }} size="small">
-        <InputLabel>Columna</InputLabel>
-        <Select
-            value={filterColumn}
-            label="Columna"
-            onChange={(e) => {
-            const nuevaColumna = e.target.value;
-            setFilterColumn(nuevaColumna);
-            const operadores = getAvailableOperators(nuevaColumna);
-            setFilterOperator(operadores[0]);
-            }}
-        >
-            {columns.map((col) => (
-            <MenuItem key={col.field} value={col.field}>
-                {col.headerName}
-            </MenuItem>
-            ))}
-        </Select>
-        </FormControl>
-        <FormControl sx={{ minWidth: 160 }} size="small">
-        <InputLabel>Operador</InputLabel>
-        <Select
-            value={filterOperator}
-            label="Operador"
-            onChange={(e) => setFilterOperator(e.target.value)}
-        >
-            {getAvailableOperators(filterColumn).map((op) => (
-            <MenuItem key={op} value={op}>
-                {op}
-            </MenuItem>
-            ))}
-        </Select>
-        </FormControl>
-        <TextField
+        <Box >
+<br></br>
+        <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', mb: 2 }}>
+          <FormControl sx={{ minWidth: 180 }} size="small">
+            <InputLabel>Columna</InputLabel>
+            <Select
+              value={filterColumn}
+              label="Columna"
+              onChange={(e) => {
+                const nuevaColumna = e.target.value;
+                setFilterColumn(nuevaColumna);
+                const operadores = getAvailableOperators(nuevaColumna);
+                setFilterOperator(operadores[0]);
+              }}
+            >
+              {columns.map((col) => (
+                <MenuItem key={col.field} value={col.field}>
+                  {col.headerName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        
+          <FormControl sx={{ minWidth: 160 }} size="small">
+            <InputLabel>Operador</InputLabel>
+            <Select
+              value={filterOperator}
+              label="Operador"
+              onChange={(e) => setFilterOperator(e.target.value)}
+            >
+              {getAvailableOperators(filterColumn).map((op) => (
+                <MenuItem key={op} value={op}>
+                  {op}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        
+          <TextField
             size="small"
             label="Valor"
             value={filterValue}
             onChange={(e) => setFilterValue(e.target.value)}
             onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleApplyFilter();
-                }
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleApplyFilter();
+              }
             }}
-        />
-        <Button
-        variant="outlined"
-        color="success"
-        onClick={() => {
-            setFilterValue('');
-            setFilterColumn('ventas_noventa');
-            setFilterOperator('contains');
-            setFilterModel({ items: [] });
-        }}
-        >
-        Limpiar Filtro
-        </Button>
-        <br></br> <br></br>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={mostrarDetalle}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                setMostrarDetalle(checked);
-                if (checked) setMostrarEtiqueta(false); 
-              }}
-            />
-          }
-          label="Detalle"
-        />
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={mostrarEtiqueta}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                setMostrarEtiqueta(checked);
-                if (checked) setMostrarDetalle(false);
-              }}
-            />
-          }
-          label="Etiqueta"
-        />
-        <Button
-          variant="outlined"
-          color={(!mostrarDetalle ) ? 'error' : 'secondary'}
-          startIcon={<FileDownloadIcon />}
-          disabled={ !selectedIds?.ids || selectedIds.ids.size === 0 || (!mostrarDetalle && !mostrarEtiqueta) || loadingFile}
-          onClick={handleDownload}
-        >
+          />
+        
+          <Button
+            variant="outlined"
+            color="success"
+            onClick={() => {
+              setFilterValue('');
+              setFilterColumn('ventas_noventa');
+              setFilterOperator('contains');
+              setFilterModel({ items: [] });
+            }}
+          >
+            Limpiar Filtro
+          </Button>
+        
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={mostrarDetalle}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setMostrarDetalle(checked);
+                  if (checked) setMostrarEtiqueta(false);
+                }}
+              />
+            }
+            label="Detalle"
+          />
+        
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={mostrarEtiqueta}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setMostrarEtiqueta(checked);
+                  if (checked) setMostrarDetalle(false);
+                }}
+              />
+            }
+            label="Etiqueta"
+          />
+        
+          <Button
+            variant="outlined"
+            color={!mostrarDetalle && !mostrarEtiqueta ? 'error' : 'secondary'}
+            startIcon={<FileDownloadIcon />}
+            disabled={
+              !selectedIds?.ids ||
+              selectedIds.ids.size === 0 ||
+              (!mostrarDetalle && !mostrarEtiqueta) ||
+              loadingFile
+            }
+            onClick={handleDownload}
+          >
             {loadingFile ? 'Consultando...' : 'Descargar PDF'}
-
-        </Button>
-      <br/><br/>
+          </Button>
+        </Stack>
+        
     
     
         <DataGrid

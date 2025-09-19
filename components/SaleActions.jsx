@@ -213,7 +213,6 @@ export default function SaleActions() {
     <br></br> 
     <Stack
         direction="row"
-        justifyContent="space-between"
         alignItems="flex-start"
         spacing={2}
         sx={{ mb: 2 }}
