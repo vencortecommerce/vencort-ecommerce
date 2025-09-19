@@ -144,7 +144,7 @@ export default function DataGridWeb() {
         const queryParams = idArray.map((id) => `noVenta=${id}`).join('&');
         
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        const res = await clienteAxios.get(`/api/archivos/etiquetaMasivo?${queryParams}`, {
+        const res = await clienteAxios.get(`/api/archivos/detalleMasivo?${queryParams}`, {
           responseType: 'blob',
           headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
