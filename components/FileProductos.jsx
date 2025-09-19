@@ -102,13 +102,22 @@ export default function FileProductos() {
               slotProps={{ textField: { fullWidth: true } }}
             />
 
-            <Button
-              variant="outlined" color="primary"
-              startIcon={<FileDownloadIcon />}
-              onClick={handleBuscar}
-            >
-              Descargar
-            </Button>
+          <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                color="primary"
+                startIcon={<FileDownloadIcon />}
+                onClick={handleBuscar}
+                sx={{
+                  alignSelf: 'center',
+                  minWidth: 120,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Descargar
+              </Button>
+
           </Stack>
         </LocalizationProvider>
 
