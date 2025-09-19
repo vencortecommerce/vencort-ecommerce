@@ -13,6 +13,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 export default function DataGridWeb() {
     const [rows, setRows] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
+    const [loadingFile, setLoadingFile] = React.useState(false);
     const [selectedIds, setSelectedIds] = React.useState([]);
     const [assigning, setAssigning] = React.useState(false);
     const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success', });
@@ -104,6 +105,7 @@ export default function DataGridWeb() {
     };
     /**DESCARGA DE ARCHIVOS MÁSIVO */
     const handleDownload = async () => {
+      setLoadingFile(true);
       if(mostrarEtiqueta && mostrarDetalle){
         alert('Solo se permite seleccionar una opción');
       }else if(mostrarEtiqueta){
@@ -135,6 +137,8 @@ export default function DataGridWeb() {
           }else{
             alert('No se encontraron Etiquetas disponibles para descargar.');
           }
+        }finally {
+          setLoadingFile(false);
         }
     };
 
@@ -158,6 +162,8 @@ export default function DataGridWeb() {
         }else{
           alert('No se encontraron Detalles disponibles para descargar.');
         }
+      }finally {
+        setLoadingFile(false);
       }
     };
 
@@ -284,10 +290,11 @@ export default function DataGridWeb() {
           variant="outlined"
           color={(!mostrarDetalle ) ? 'error' : 'secondary'}
           startIcon={<FileDownloadIcon />}
-          disabled={ !selectedIds?.ids || selectedIds.ids.size === 0 || (!mostrarDetalle && !mostrarEtiqueta) }
+          disabled={ !selectedIds?.ids || selectedIds.ids.size === 0 || (!mostrarDetalle && !mostrarEtiqueta) || loadingFile}
           onClick={handleDownload}
         >
-          Descargar Detalle
+            {loadingFile ? 'Consultando...' : 'Descargar PDF'}
+
         </Button>
       <br/><br/>
     
