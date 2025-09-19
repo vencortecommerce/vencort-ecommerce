@@ -111,7 +111,7 @@ export default function DataGridWeb() {
       }else if(mostrarDetalle){
         handleDownloadDetalle();
       }else{
-        alert('Selecciona una opción');
+        alert('Selecciona una opción.');
       }
     }
 
