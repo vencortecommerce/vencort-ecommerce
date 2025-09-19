@@ -151,7 +151,7 @@ export default function DataGridWeb() {
             Accept: 'application/pdf',
           },
         });  
-        download(res.data, 'Etiqueta.pdf');
+        download(res.data, 'Detalle.pdf');
       } catch (error) {
         if (error?.response?.status === 401) {
           navigate('/');
