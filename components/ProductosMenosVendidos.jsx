@@ -120,14 +120,22 @@ export default function ProductosMenosVendidos() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row, index) => (
-                  <TableRow key={index}>
+              {Array.isArray(rows) && rows.length > 0 ? (
+                rows.map((row, index) => (
+                    <TableRow key={index}>
                     <TableCell>{row.sku}</TableCell>
                     <TableCell>{row.unidades}</TableCell>
                     <TableCell>${row.total?.toFixed(2)}</TableCell>
                     <TableCell>{row.origen}</TableCell>
                   </TableRow>
-                ))}
+                ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      No hay datos disponibles
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
             <Box sx={{ mt: 3 }}>

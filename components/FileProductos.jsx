@@ -111,7 +111,7 @@ export default function FileProductos() {
                 onClick={handleBuscar}
                 sx={{
                   alignSelf: 'center',
-                  minWidth: 120,
+                  minWidth: 80,
                   whiteSpace: 'nowrap',
                 }}
               >

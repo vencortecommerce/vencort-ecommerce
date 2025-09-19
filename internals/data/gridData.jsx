@@ -29,7 +29,7 @@ export const EmpacadorCell = ({ row }) => {
           Authorization: `Bearer ${token}`,
         },      };
 
-      const queryParams = [`idempacador=${parseInt(selected)}`, `idmercadolibre=${row.idmercadolibre}`].join('&');
+      const queryParams = [`idempacador=${parseInt(selected)}`, `noVenta=${row.id}`].join('&');
       const response = await clienteAxios.post(`/api/empacador/asignarEmpacador?${queryParams}`, {}, config);
       setShowSnackbar(true);
       row.empacador = empacadores.find(e => e.id_empacador === parseInt(selected))?.empacador_nombre ?? 'Asignado';
@@ -116,7 +116,7 @@ export const SurtidorCell = ({ row }) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },      };
-      const queryParams = `idmercadolibre=${row.idmercadolibre}`;
+      const queryParams = `noVenta=${row.id}`;
       await clienteAxios.post(`/api/ventas/asignarSurtidor?${queryParams}`, {}, config);
       const sessionName = getSessionUserName() ?? 'Asignado';
       row.surtidor = sessionName;

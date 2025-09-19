@@ -80,6 +80,50 @@ export default function SLAPacker() {
     fetchTotales(fInicial, fFinal);
   };
 
+
+  const handleDescargar = (idEmpacador) => {
+    if (!fechaInicial || !fechaFinal) {
+      alert('Selecciona ambas fechas');
+      return;
+    }
+    console.log("ID ",idEmpacador);
+    const fInicial = formatDate(fechaInicial);
+    const fFinal = formatDate(fechaFinal);
+    handleDownloadTemplate(fInicial, fFinal, idEmpacador);
+  };
+
+  const handleDownloadTemplate = async (fInicial, fFinal, idEmpacador) => {
+
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    setLoading(true);
+      try {
+        const response = await clienteAxios.get(`/api/archivos/ventasEmpacador?fechaInicial=${fInicial}&fechaFinal=${fFinal}&idEmpacador=${idEmpacador}`, {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'ventas.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (error) {
+        if (error?.response?.status === 401) {
+          navigate('/');
+        }else{
+          console.error('Error descargando el reporte:', error);
+          alert('No se pudo descargar el reporte. Intenta más tarde.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };  
+
+
   return (
     <Card variant="outlined" sx={{ width: '100%' }}>
       <CardContent>
@@ -118,16 +162,20 @@ export default function SLAPacker() {
                   <TableCell sx={{ fontWeight: 'bold' }}>Total Pedidos Atendidos</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Pedidos Cumplimiento SL</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Porcentaje Cumplimiento</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Promedio Empaques 1hra</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {Array.isArray(rows) && rows.length > 0 ? (
                   rows.map((row, index) => (
                     <TableRow key={index}>
-                      <TableCell>{row.empacador}</TableCell>
+                      <TableCell><Link  onClick={() => handleDescargar(row.idEmpacador)}>
+                        {row.empacador}
+                      </Link></TableCell>
                       <TableCell>{row.pedidos}</TableCell>
                       <TableCell>{row.pedidosSLA}</TableCell>
                       <TableCell>{row.porcentaje}</TableCell>
+                      <TableCell>{row.promedio}</TableCell>
                     </TableRow>
                   ))
                 ) : (

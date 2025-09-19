@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 import FileProductos from './FileProductos';
+import FileVentasTotales from './FileVentasTotales';
 
 export default function MainGridReports() {
   return (
@@ -17,6 +18,9 @@ export default function MainGridReports() {
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12} md={6}>
           <FileProductos />
+        </Grid>
+        <Grid item xs={12}>
+          <FileVentasTotales/>
         </Grid>
       </Grid>
     </Box>
