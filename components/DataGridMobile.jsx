@@ -134,7 +134,7 @@ export default function DataGridMobile() {
     try {
       const response = await clienteAxios.get('/api/ventas/consultaMobile', config);
       const dataWithId = response.data.map((item) => ({
-        id: item.idmercadolibre,
+        id: item.ventas_noventa,
         ...item,
       }));
       if (mountedRef.current) {

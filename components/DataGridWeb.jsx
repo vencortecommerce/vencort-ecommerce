@@ -1,13 +1,14 @@
-import * as React from 'react';
+import React, { useState } from 'react';
 import { Box, Button, Snackbar, Alert } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { columns, columnGroupingModel } from '../internals/data/gridData';
 import clienteAxios from '../src/context/Config';
 import {
   Select, MenuItem, InputLabel, FormControl,
-  TextField
+  TextField, FormControlLabel, Checkbox
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 export default function DataGridWeb() {
     const [rows, setRows] = React.useState([]);
@@ -26,7 +27,10 @@ export default function DataGridWeb() {
     const mountedRef = React.useRef(true);
     const isFetchingRef = React.useRef(false);
     const hasFetchedRef = React.useRef(false); 
-
+    // ====== Descarga de Másivos======  
+    const [mostrarDetalle, setMostrarDetalle] = useState(false);
+    const [mostrarEtiqueta, setMostrarEtiqueta] = useState(false);
+    
     const fetchData = async () => {
         if (isFetchingRef.current) return;
         isFetchingRef.current = true;
@@ -41,7 +45,7 @@ export default function DataGridWeb() {
         try {
             const response = await clienteAxios.get('/api/ventas/consulta', config);
             const dataWithId = response.data.map((item) => ({
-            id: item.idmercadolibre,
+            id: item.ventas_noventa,
             ...item,
             }));
             if (mountedRef.current) setRows(dataWithId);
@@ -98,6 +102,97 @@ export default function DataGridWeb() {
         }
         return ['contains', 'equals', 'startsWith', 'endsWith'];
     };
+    /**DESCARGA DE ARCHIVOS MÁSIVO */
+    const handleDownload = async () => {
+      if(mostrarEtiqueta && mostrarDetalle){
+        alert('Solo se permite seleccionar una opción');
+      }else if(mostrarEtiqueta){
+        handleDownloadEtiqueta();
+      }else if(mostrarDetalle){
+        handleDownloadDetalle();
+      }else{
+        alert('Selecciona una opción');
+      }
+    }
+
+    const handleDownloadEtiqueta = async () => {
+        try {
+          const idArray = Array.from(selectedIds?.ids ?? []);
+          const queryParams = idArray.map((id) => `noVenta=${id}`).join('&');
+          
+          const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+          const res = await clienteAxios.get(`/api/archivos/etiquetaMasivo?${queryParams}`, {
+            responseType: 'blob',
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              Accept: 'application/pdf',
+            },
+          });  
+          download(res.data, 'Etiqueta.pdf');
+        } catch (error) {
+          if (error?.response?.status === 401) {
+            navigate('/');
+          }else{
+            alert('No se encontraron Etiquetas disponibles para descargar.');
+          }
+        }
+    };
+
+    const handleDownloadDetalle = async () => {
+      try {
+        const idArray = Array.from(selectedIds?.ids ?? []);
+        const queryParams = idArray.map((id) => `noVenta=${id}`).join('&');
+        
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const res = await clienteAxios.get(`/api/archivos/etiquetaMasivo?${queryParams}`, {
+          responseType: 'blob',
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            Accept: 'application/pdf',
+          },
+        });  
+        download(res.data, 'Etiqueta.pdf');
+      } catch (error) {
+        if (error?.response?.status === 401) {
+          navigate('/');
+        }else{
+          alert('No se encontraron Detalles disponibles para descargar.');
+        }
+      }
+    };
+
+      function download(value, fileName = 'Archivo.pdf', mime = 'application/pdf') {
+        let blob;
+      
+        if (value instanceof Blob) {
+          blob = value.type ? value : new Blob([value], { type: mime });
+        } else if (value instanceof ArrayBuffer) {
+          blob = new Blob([new Uint8Array(value)], { type: mime });
+        } else if (ArrayBuffer.isView(value)) { 
+          blob = new Blob([value], { type: mime });
+        } else if (Array.isArray(value)) {
+          blob = new Blob([new Uint8Array(value)], { type: mime });
+        } else if (typeof value === 'string') {
+          let base64 = value;
+          const m = base64.match(/^data:([^;]+);base64,(.*)$/);
+          const b64 = m ? m[2] : base64;
+          const binary = atob(b64);
+          const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+          blob = new Blob([bytes], { type: mime });
+        } else {
+          console.warn('Formato de Archivo no soportado:', typeof value, value);
+          return;
+        }
+      
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
 
     return (
         <Box ><br/>
@@ -157,6 +252,42 @@ export default function DataGridWeb() {
         }}
         >
         Limpiar Filtro
+        </Button>
+        <br></br> <br></br>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={mostrarDetalle}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setMostrarDetalle(checked);
+                if (checked) setMostrarEtiqueta(false); 
+              }}
+            />
+          }
+          label="Detalle"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={mostrarEtiqueta}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setMostrarEtiqueta(checked);
+                if (checked) setMostrarDetalle(false);
+              }}
+            />
+          }
+          label="Etiqueta"
+        />
+        <Button
+          variant="outlined"
+          color={(!mostrarDetalle ) ? 'error' : 'secondary'}
+          startIcon={<FileDownloadIcon />}
+          disabled={ !selectedIds?.ids || selectedIds.ids.size === 0 || (!mostrarDetalle && !mostrarEtiqueta) }
+          onClick={handleDownload}
+        >
+          Descargar Detalle
         </Button>
       <br/><br/>
     
@@ -226,7 +357,7 @@ export default function DataGridWeb() {
         loading={loading}
         filterModel={filterModel}
         onFilterModelChange={(newModel) => setFilterModel(newModel)}
-        isRowSelectable={(params) => !(params.row.surtidor && params.row.empacador)}
+        isRowSelectable={(params) => (Boolean(params.row.detalle) || Boolean(params.row.etiqueta))}
         onRowSelectionModelChange={(ids) => { 
           setSelectedIds(ids); }}
         slotProps={{

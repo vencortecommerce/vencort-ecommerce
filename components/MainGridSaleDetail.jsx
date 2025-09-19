@@ -44,7 +44,7 @@ export default function MainGridSaleDetail(props) {
             Authorization: `Bearer ${token}`,
           },
         };
-        const response = await clienteAxios.get(`/api/ventas/detalle?idmercadolibre=${id}`, config);
+        const response = await clienteAxios.get(`/api/ventas/detalle?noVenta=${id}`, config);
         setDetalle(response.data);
       } catch (err) {
         if (error?.response?.status === 401) {
