@@ -298,8 +298,8 @@ export default function DataGridWeb() {
             color={!mostrarDetalle && !mostrarEtiqueta ? 'error' : 'secondary'}
             startIcon={<FileDownloadIcon />}
             disabled={
-              !selectedIds?.ids ||
-              selectedIds.ids.size === 0 ||
+              (!selectedIds?.ids ||
+              selectedIds.ids.size === 0 ) ||
               (!mostrarDetalle && !mostrarEtiqueta) ||
               loadingFile
             }
