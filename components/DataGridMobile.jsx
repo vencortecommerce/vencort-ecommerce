@@ -889,7 +889,7 @@ async function toStableSrc(payload, mimeHint, token) {
                                   },
                                 });
         
-                                downloadEtiqueta(res.data, fileName);
+                                download(res.data, fileName);
                               } catch (err) {
                                 console.error('Error descargando etiqueta:', err);
                                 setSnackbar({ open: true, message: 'No se pudo descargar la etiqueta', severity: 'error' });
