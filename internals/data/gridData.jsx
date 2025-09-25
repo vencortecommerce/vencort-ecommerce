@@ -181,6 +181,7 @@ export const AnotacionCell = ({ row }) => {
   
   const handleAsignarAnotacion = async () => {
     try {
+      setAssigning(true);
       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
       const config = {
         headers: {
@@ -188,14 +189,19 @@ export const AnotacionCell = ({ row }) => {
           Authorization: `Bearer ${token}`,
         },      };
 
-      const queryParams = [`anotacion=${anotacion}`, `descricion=${descripcion}`,`noVenta=${row.id}`].join('&');
+      const queryParams = [`anotacion=${anotacion}`, `descripcion=${descripcion}`,`noVenta=${row.id}`].join('&');
       const response = await clienteAxios.post(`/api/ventas/anotacion?${queryParams}`, {}, config);
       setShowSnackbar(true);
       row.anotacion = anotacion
       row.anotacion_descripcion = descripcion;
     } catch (e) {
+      setAssigning(true);
       console.error('Error al asignar Anotación', e);
+      alert("Error al asignar Anotación");
+      setAssigning(false);
+      setOpenAnotacion(false);
     } finally {
+      setAssigning(false);
       setOpenAnotacion(false);
     }
   };
@@ -270,7 +276,7 @@ export const AnotacionCell = ({ row }) => {
             variant="contained"
             color="primary"
           >
-            {assigning ? 'Asignando...' : 'Asignar'}
+            {assigning ? 'Agregando...' : 'Agregar'}
           </Button>
         </DialogActions>
       </Dialog>
