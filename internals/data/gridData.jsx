@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Avatar from '@mui/material/Avatar';
-import Chip from '@mui/material/Chip';
-import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import { useEmpacadoresActivos } from '../../components/useEmpacadores';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
+  Chip, Avatar, Dialog, DialogTitle, DialogContent, DialogActions,
   FormControl, InputLabel, Select, MenuItem, Button, Snackbar, Alert,
-  Box, CircularProgress
+  Box, CircularProgress, IconButton, TextField, Typography 
 } from '@mui/material';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import clienteAxios from '../../src/context/Config';
 import { Link } from 'react-router-dom';
 
@@ -157,6 +155,134 @@ export const SurtidorCell = ({ row }) => {
       >
         <Alert onClose={() => setShowSnackbar(false)} severity="error" sx={{ width: '100%' }}>
           {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </>
+  );
+};
+
+export const AnotacionCell = ({ row }) => {
+  const [openAnotacion, setOpenAnotacion] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const opcionesAnotacion = [
+    'Roto',
+    'Incompleto',
+    'Diferente',
+    'Completo sin daños',
+    'Cancelaciones',
+    'Sin existencia',
+    'Pendiente',
+    'N/D'
+  ];
+
+  const [anotacion, setAnotacion] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  
+  const handleAsignarAnotacion = async () => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },      };
+
+      const queryParams = [`anotacion=${anotacion}`, `descricion=${descripcion}`,`noVenta=${row.id}`].join('&');
+      const response = await clienteAxios.post(`/api/ventas/anotacion?${queryParams}`, {}, config);
+      setShowSnackbar(true);
+      row.anotacion = anotacion
+      row.anotacion_descripcion = descripcion;
+    } catch (e) {
+      console.error('Error al asignar Anotación', e);
+    } finally {
+      setOpenAnotacion(false);
+    }
+  };
+
+
+  return (
+    <>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+        <span>{row.anotacion + ' - ' + row.anotacion_descripcion}</span>
+        <IconButton
+          size="small"
+          color="primary"
+          onClick={() => setOpenAnotacion(true)}
+        >
+          <EditOutlinedIcon fontSize="small" />
+        </IconButton>
+      </Box>
+
+      <Dialog open={openAnotacion} onClose={() => setOpenAnotacion(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Notas</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Anotación
+              </Typography>
+              <FormControl fullWidth size="small">
+                <InputLabel id="anotacion-label">Selecciona una opción</InputLabel>
+                <Select
+                  labelId="anotacion-label"
+                  value={anotacion}
+                  label="Selecciona una opción"
+                  onChange={(e) => {
+                    setAnotacion(e.target.value);
+                    setErrors((prev) => ({ ...prev, anotacion: false }));
+                  }}
+                >
+                  {opcionesAnotacion.map((opcion) => (
+                    <MenuItem key={opcion} value={opcion}>
+                      {opcion}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Descripción
+              </Typography>
+              <TextField
+                fullWidth
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                multiline
+                minRows={2}
+                required
+                size="small"
+                placeholder="Escribe una descripción..."
+                error={descripcion.trim() === ''}
+                helperText={descripcion.trim() === '' ? 'Campo obligatorio' : ''}
+              />
+            </Box>
+          </Box>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setOpenAnotacion(false)}>Cerrar</Button>
+          <Button
+            onClick={handleAsignarAnotacion}
+            disabled={!descripcion}
+            variant="contained"
+            color="primary"
+          >
+            {assigning ? 'Asignando...' : 'Asignar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={showSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setShowSnackbar(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setShowSnackbar(false)} severity="success" sx={{ width: '100%' }}>
+          Anotación actualizada correctamente
         </Alert>
       </Snackbar>
     </>
@@ -837,6 +963,14 @@ export const columns = [
     },
   },
   {
+    field: 'anotacion',
+    headerName: 'Anotación',
+    flex: 0.5,
+    minWidth: 200,
+    sortable: false,
+    renderCell: (params) => <AnotacionCell row={params.row} />
+  },
+  {
     field: 'ventas_descripcionestado',
     headerName: 'Descripción del estado',
     flex: 0.5,
@@ -1115,6 +1249,7 @@ export const columnGroupingModel = [
       { field: 'estadoVenta' },
       { field: 'etiqueta' },
       { field: 'detalle' },
+      { field: 'anotacion' },
       { field: 'ventas_descripcionestado' },
       { field: 'ventas_paquetevarios' },
       { field: 'inventario' },
