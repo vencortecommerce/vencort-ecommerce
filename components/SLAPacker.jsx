@@ -27,6 +27,7 @@ export default function SLAPacker() {
   const [loading, setLoading] = React.useState(false);
   const [rows, setRows] = React.useState([]);
   const navigate = useNavigate();
+  const [loadingFile, setLoadingFile] = React.useState(false);
 
   const formatDate = (date) => date.toISOString().split('T')[0]; // YYYY-MM-DD
 
@@ -95,7 +96,7 @@ export default function SLAPacker() {
   const handleDownloadTemplate = async (fInicial, fFinal, idEmpacador) => {
 
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    setLoading(true);
+    setLoadingFile(true);
       try {
         const response = await clienteAxios.get(`/api/archivos/ventasEmpacador?fechaInicial=${fInicial}&fechaFinal=${fFinal}&idEmpacador=${idEmpacador}`, {
           responseType: 'blob',
@@ -119,7 +120,7 @@ export default function SLAPacker() {
           alert('No se pudo descargar el reporte. Intenta más tarde.');
         }
       } finally {
-        setLoading(false);
+        setLoadingFile(false);
       }
     };  
 
@@ -143,8 +144,8 @@ export default function SLAPacker() {
               onChange={(newValue) => setFechaFinal(newValue)}
               slotProps={{ textField: { fullWidth: true } }}
             />
-            <Button variant="contained" color="primary" onClick={handleBuscar}>
-              Buscar
+            <Button variant="contained" color="primary" onClick={handleBuscar} sx={{ width: '40%' }}>
+            {loadingFile ? 'Descargando...' : 'Buscar'}
             </Button>
           </Stack>
         </LocalizationProvider>

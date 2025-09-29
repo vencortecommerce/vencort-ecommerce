@@ -133,7 +133,7 @@ export default function ChartSalesByStatus() {
         return {
           id: idx,
           label: etiqueta || `Registro ${idx + 1}`,
-          value: pct, // El Pie usa el valor relativo; aquí usamos el porcentaje directo
+          value: pct,
           _total: Number(item?.total ?? 0),
         };
       });
@@ -196,7 +196,7 @@ export default function ChartSalesByStatus() {
               onChange={(newValue) => setFechaFinal(newValue)}
               slotProps={{ textField: { fullWidth: true } }}
             />
-            <Button variant="contained" color="primary" onClick={handleBuscar}>
+            <Button variant="contained" color="primary" onClick={handleBuscar}  sx={{ width: '40%' }}>
               Buscar
             </Button>
           </Stack>

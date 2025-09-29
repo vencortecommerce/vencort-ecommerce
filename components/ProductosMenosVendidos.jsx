@@ -98,7 +98,7 @@ export default function ProductosMenosVendidos() {
               onChange={(newValue) => setFechaFinal(newValue)}
               slotProps={{ textField: { fullWidth: true } }}
             />
-            <Button variant="contained" color="primary" onClick={handleBuscar}>
+            <Button variant="contained" color="primary" onClick={handleBuscar}  sx={{ width: '40%' }}>
               Buscar
             </Button>
           </Stack>
@@ -117,6 +117,7 @@ export default function ProductosMenosVendidos() {
                   <TableCell sx={{ fontWeight: 'bold' }}>Unidades</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Origen</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Descripción</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -125,8 +126,9 @@ export default function ProductosMenosVendidos() {
                     <TableRow key={index}>
                     <TableCell>{row.sku}</TableCell>
                     <TableCell>{row.unidades}</TableCell>
-                    <TableCell>${row.total?.toFixed(2)}</TableCell>
+                    <TableCell>$ {new Intl.NumberFormat('es-MX').format(row.total)}</TableCell>
                     <TableCell>{row.origen}</TableCell>
+                    <TableCell>{row.descripcion}</TableCell>
                   </TableRow>
                 ))
                 ) : (

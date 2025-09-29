@@ -128,7 +128,7 @@ export default function SessionsChart() {
               onChange={(newValue) => setFechaFinal(newValue)}
               slotProps={{ textField: { fullWidth: true } }}
             />
-            <Button variant="contained" color="primary" onClick={handleBuscar}>
+            <Button variant="contained" color="primary" onClick={handleBuscar} sx={{ width: '40%' }}>
               Buscar
             </Button>
           </Stack>
