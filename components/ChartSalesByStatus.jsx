@@ -128,7 +128,9 @@ export default function ChartSalesByStatus() {
         let pct = Number(item?.porcentaje ?? 0);
         if (!Number.isFinite(pct)) pct = 0;
         // Si parece estar en 0–1, conviértelo a %
-        if (pct > 0 && pct <= 1) pct = pct * 100;
+        if (pct > 0 && pct < 1 && pct < 0.05) {
+          pct = pct * 100;
+        }        
 
         return {
           id: idx,
