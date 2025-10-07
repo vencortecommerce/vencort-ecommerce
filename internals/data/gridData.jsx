@@ -1031,6 +1031,21 @@ export const columns = [
     headerName: 'SKU',
     flex: 1,
     minWidth: 300,
+    renderCell: (params) => {
+      return (
+        <div
+          style={{
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+            lineHeight: '1.1',
+            padding: '4px 8px',
+          }}
+        >
+          {params.value}
+        </div>
+      );
+    },
   },
   {
     field: 'publicaciones_variante',

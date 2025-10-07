@@ -121,6 +121,7 @@ export default function SaleActions() {
   };
   const [subtotales, setSubtotales] = React.useState([]);
   const [errorMsg, setErrorMsg] = React.useState('');
+  const [inventario, setInventario] = React.useState([]);
 
   const fetchData = React.useCallback(async () => {
     setLoading(true);
@@ -149,10 +150,22 @@ export default function SaleActions() {
       });
   
       setSubtotales(completados);
+
+
+      const estadosValidosInventario = ['BAJO STOCK','SIN EXISTENCIA'];
+
+      const inventario = estadosValidosInventario.map((estado) => {
+        const existente = arr.find(item => item.estado === estado);
+        return existente ?? { estado, total: 0, porcentaje: 0, origen: '' };
+      });
+      setInventario(inventario);
+
+
     } catch (error) {
       console.error('Error al obtener estadísticas:', error);
       setErrorMsg('No se pudieron cargar los datos del reporte. Intenta de nuevo.');
       setSubtotales([]);
+      setInventario([]);
     } finally {
       setLoading(false);
     }
@@ -210,6 +223,29 @@ export default function SaleActions() {
         </Card>
       ))}
     </Stack>
+    <Box sx={{ mt: 3 }}>
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+        Inventario
+      </Typography>
+      <Stack direction="row" spacing={2}>
+        {inventario.map((item) => (
+          <Chip
+            key={item.estado}
+            label={`${item.estado}: ${item.total}`}
+            sx={{
+              fontSize: '14px',
+              px: 2,
+              py: 1,
+              bgcolor:
+                item.estado === 'SIN EXISTENCIA' ? '#f44336' : // rojo
+                item.estado === 'BAJO STOCK' ? '#ff9800' : // naranja
+                'default',
+              color: 'white',
+            }}
+          />
+        ))}
+      </Stack>
+    </Box>
     <br></br> 
     <Stack
         direction="row"
