@@ -171,7 +171,7 @@ export const AnotacionCell = ({ row }) => {
     'Diferente',
     'Completo sin daños',
     'Cancelaciones',
-    'Sin existencia',
+    'Sin inventario',
     'Pendiente',
     'N/D'
   ];

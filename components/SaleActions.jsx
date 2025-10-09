@@ -155,7 +155,7 @@ export default function SaleActions() {
       setSubtotales(completados);
 
 
-      const estadosValidosInventario = ['BAJO STOCK','SIN EXISTENCIA'];
+      const estadosValidosInventario = ['BAJO STOCK','SIN INVENTARIO'];
 
       const inventario = estadosValidosInventario.map((estado) => {
         const existente = arr.find(item => item.estado === estado);
@@ -240,7 +240,7 @@ export default function SaleActions() {
               px: 2,
               py: 1,
               bgcolor:
-                item.estado === 'SIN EXISTENCIA' ? '#f44336' : // rojo
+                item.estado === 'SIN INVENTARIO' ? '#f44336' : // rojo
                 item.estado === 'BAJO STOCK' ? '#ff9800' : // naranja
                 'default',
               color: 'white',

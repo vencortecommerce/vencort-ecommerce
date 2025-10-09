@@ -209,6 +209,28 @@ export default function MainGridSaleDetail(props) {
                               <Grid item xs={6} md={3}>
                                 <Typography><strong>Precio Total:</strong> ${item.publicaciones_preciototal}</Typography>
                               </Grid>
+                              <Grid item xs={6} md={3}>
+                              <Typography>
+                                <strong>Inventario:</strong>{' '}
+                                <span
+                                  style={{
+                                    textDecoration: 'underline',
+                                    textDecorationColor:
+                                      item.inventario_estado === 'Bajo Stock'
+                                        ? 'orange'
+                                        : item.inventario_estado === 'Cerrado'
+                                        ? 'green'
+                                        : item.inventario_estado === 'Existencia'
+                                        ? 'blue'
+                                        : item.inventario_estado === 'Sin Inventario'
+                                        ? 'red'
+                                        : 'inherit', // color por defecto si no coincide
+                                  }}
+                                >
+                                  {item.inventario_estado}
+                                </span>
+                              </Typography>
+                              </Grid>
                             </Grid>
                           </Grid>
                         </Grid>
