@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 import FileProductos from './FileProductos';
+import FileInventario from './FileInventario';
 import FileVentasTotales from './FileVentasTotales';
 
 export default function MainGridReports() {
@@ -21,6 +22,9 @@ export default function MainGridReports() {
         </Grid>
         <Grid item xs={12}>
           <FileVentasTotales/>
+        </Grid>
+        <Grid item xs={12}>
+          <FileInventario/>
         </Grid>
       </Grid>
     </Box>

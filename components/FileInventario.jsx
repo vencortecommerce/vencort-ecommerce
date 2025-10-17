@@ -1,0 +1,103 @@
+import * as React from 'react';
+import {
+  Card,
+  CardContent,
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Stack,
+  Button,
+  Link,
+  CircularProgress,
+} from '@mui/material';
+import Title from './Title';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import clienteAxios from '../src/context/Config';
+import { useNavigate } from 'react-router-dom';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+
+export default function FileInventario() {
+  const [loading, setLoading] = React.useState(false);
+  const navigate = useNavigate();
+
+
+  const handleDownloadTemplate = async () => {
+
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    setLoading(true);
+      try {
+        const response = await clienteAxios.get(`/api/archivos/inventario`, {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.data || response.data.size === 0) {
+          alert('El archivo no contiene información. Verifica las fechas seleccionadas.');
+          return;
+        }
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'inventario.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (error) {
+        if (error?.response?.status === 401) {
+          navigate('/');
+        }else{
+          console.error('Error descargando el reporte:', error);
+          alert('No se pudo descargar el reporte. Intenta más tarde.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+
+  return (
+    <Card variant="outlined" sx={{ width: '100%' }}>
+      <CardContent>
+        <Title>Consulta Inventario Pacific</Title>
+
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+          <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                color="primary"
+                startIcon={<FileDownloadIcon />}
+                onClick={handleDownloadTemplate}
+                sx={{
+                  alignSelf: 'center',
+                  minWidth: 80,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Descargar
+              </Button>
+
+          </Stack>
+        </LocalizationProvider>
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
